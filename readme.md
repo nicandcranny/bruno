@@ -55,19 +55,22 @@ You can explore our [paid versions](https://www.usebruno.com/pricing) to see if 
 
 ## Table of Contents
 
+- [Commercial Versions ✨](#commercial-versions-)
+- [Table of Contents](#table-of-contents)
 - [Installation](#installation)
 - [Features](#features)
-  - [Run across multiple platforms 🖥️](#run-across-multiple-platforms-%EF%B8%8F)
-  - [Collaborate via Git 👩‍💻🧑‍💻](#collaborate-via-git-%E2%80%8D%E2%80%8D)
+  - [Run across multiple platforms 🖥️](#run-across-multiple-platforms-️)
+  - [Collaborate via Git 👩‍💻🧑‍💻](#collaborate-via-git-)
 - [Important Links 📌](#important-links-)
 - [Showcase 🎥](#showcase-)
 - [Share Testimonials 📣](#share-testimonials-)
 - [Publishing to New Package Managers](#publishing-to-new-package-managers)
 - [Stay in touch 🌐](#stay-in-touch-)
 - [Trademark](#trademark)
-- [Contribute 👩‍💻🧑‍💻](#contribute-%E2%80%8D%E2%80%8D)
+- [Contribute 👩‍💻🧑‍💻](#contribute-)
 - [Authors](#authors)
 - [License 📄](#license-)
+- [TODOs](#todos)
 
 ## Installation
 
@@ -180,3 +183,12 @@ Even if you are not able to make contributions via code, please don't hesitate t
 ## License 📄
 
 [MIT](license.md)
+
+## TODOs
+
+1. Search request to be able to search for collection name
+2. Global search change to Cmd+P
+3. Always sort global environment by name A-Z
+4. Search feature on global environment
+5. Favorite feature for collections (stay on top)
+6. Add global environment to global search
