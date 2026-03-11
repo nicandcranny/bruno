@@ -1,6 +1,51 @@
 const { describe, it, expect } = require('@jest/globals');
-const { MATCH_TYPES, SEARCH_TYPES } = require('../constants');
-const { searchGlobalEnvironments } = require('./searchUtils');
+const { MATCH_TYPES, SEARCH_SCOPES, SEARCH_TYPES } = require('../constants');
+const { parseSearchQuery, searchCollectionEnvironments, searchGlobalEnvironments } = require('./searchUtils');
+
+describe('global search query parsing', () => {
+  it('recognizes supported prefixes and strips them from search terms', () => {
+    expect(parseSearchQuery('col:Some Collection')).toEqual(
+      expect.objectContaining({
+        scope: SEARCH_SCOPES.COLLECTION,
+        matchedPrefix: 'col:',
+        normalizedQuery: 'Some Collection',
+        searchTerms: ['some', 'collection']
+      })
+    );
+  });
+
+  it('treats unknown prefixes as normal text', () => {
+    expect(parseSearchQuery('foo:bar')).toEqual(
+      expect.objectContaining({
+        scope: SEARCH_SCOPES.ALL,
+        hasRecognizedPrefix: false,
+        normalizedQuery: 'foo:bar',
+        searchTerms: ['foo:bar']
+      })
+    );
+  });
+});
+
+describe('global search collection environment results', () => {
+  it('matches collection environments by environment name', () => {
+    const results = searchCollectionEnvironments([
+      {
+        uid: 'col-1',
+        name: 'Billing',
+        environments: [{ uid: 'env-1', name: 'Staging', variables: [] }]
+      }
+    ], ['stag']);
+
+    expect(results).toEqual([
+      expect.objectContaining({
+        type: SEARCH_TYPES.ENVIRONMENT,
+        environmentUid: 'env-1',
+        collectionUid: 'col-1',
+        matchType: MATCH_TYPES.ENVIRONMENT
+      })
+    ]);
+  });
+});
 
 describe('global search environment results', () => {
   it('matches global environments by environment name', () => {
