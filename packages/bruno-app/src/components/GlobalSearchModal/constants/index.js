@@ -1,14 +1,17 @@
 export const SEARCH_TYPES = {
   DOCUMENTATION: 'documentation',
   COLLECTION: 'collection',
+  GLOBAL_ENVIRONMENT: 'global-environment',
   FOLDER: 'folder',
   REQUEST: 'request'
 };
 
 export const MATCH_TYPES = {
   COLLECTION: 'collection',
+  GLOBAL_ENVIRONMENT: 'global-environment',
   FOLDER: 'folder',
   REQUEST: 'request',
+  VARIABLE: 'variable',
   URL: 'url',
   PATH: 'path',
   DOCUMENTATION: 'documentation'

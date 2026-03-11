@@ -36,24 +36,27 @@ export const sortResults = (results) => {
     // Sort by match type priority
     const matchTypeOrder = {
       [MATCH_TYPES.COLLECTION]: 0,
-      [MATCH_TYPES.FOLDER]: 1,
-      [MATCH_TYPES.REQUEST]: 2,
-      [MATCH_TYPES.URL]: 3,
-      [MATCH_TYPES.PATH]: 4
+      [MATCH_TYPES.GLOBAL_ENVIRONMENT]: 1,
+      [MATCH_TYPES.FOLDER]: 2,
+      [MATCH_TYPES.REQUEST]: 3,
+      [MATCH_TYPES.VARIABLE]: 4,
+      [MATCH_TYPES.URL]: 5,
+      [MATCH_TYPES.PATH]: 6
     };
-    const aMatchType = matchTypeOrder[a.matchType] ?? 5;
-    const bMatchType = matchTypeOrder[b.matchType] ?? 5;
+    const aMatchType = matchTypeOrder[a.matchType] ?? 7;
+    const bMatchType = matchTypeOrder[b.matchType] ?? 7;
 
     if (aMatchType !== bMatchType) return aMatchType - bMatchType;
 
     // Sort by type priority
     const typeOrder = {
       [SEARCH_TYPES.COLLECTION]: 0,
-      [SEARCH_TYPES.FOLDER]: 1,
-      [SEARCH_TYPES.REQUEST]: 2
+      [SEARCH_TYPES.GLOBAL_ENVIRONMENT]: 1,
+      [SEARCH_TYPES.FOLDER]: 2,
+      [SEARCH_TYPES.REQUEST]: 3
     };
-    const aType = typeOrder[a.type] ?? 3;
-    const bType = typeOrder[b.type] ?? 3;
+    const aType = typeOrder[a.type] ?? 4;
+    const bType = typeOrder[b.type] ?? 4;
 
     if (aType !== bType) return aType - bType;
 
@@ -66,6 +69,7 @@ export const getTypeLabel = (type) => {
   const baseLabels = {
     [SEARCH_TYPES.DOCUMENTATION]: 'Documentation',
     [SEARCH_TYPES.COLLECTION]: 'Collection',
+    [SEARCH_TYPES.GLOBAL_ENVIRONMENT]: 'Global Environment',
     [SEARCH_TYPES.FOLDER]: 'Folder'
   };
 
@@ -91,4 +95,39 @@ export const getItemPath = (item, collection, findParentItemInCollection) => {
 
   pathParts.unshift(collection.name);
   return pathParts.join('/');
+};
+
+const getEnvironmentVariableMatch = (variables = [], searchTerms = []) => {
+  return variables.find((variable) => {
+    const variableName = variable?.name?.toLowerCase() || '';
+    const variableValue = typeof variable?.value === 'string' && !variable?.secret
+      ? variable.value.toLowerCase()
+      : '';
+
+    return searchTerms.every((term) => variableName.includes(term) || variableValue.includes(term));
+  });
+};
+
+export const searchGlobalEnvironments = (globalEnvironments = [], searchTerms = []) => {
+  return globalEnvironments.reduce((results, environment) => {
+    const environmentName = environment?.name?.toLowerCase() || '';
+    const nameMatch = searchTerms.every((term) => environmentName.includes(term));
+    const matchingVariable = getEnvironmentVariableMatch(environment?.variables, searchTerms);
+
+    if (!nameMatch && !matchingVariable) {
+      return results;
+    }
+
+    results.push({
+      type: SEARCH_TYPES.GLOBAL_ENVIRONMENT,
+      item: environment,
+      name: environment?.name || 'Unnamed Global Environment',
+      path: 'Global Environments',
+      description: matchingVariable?.name ? `Variable: ${matchingVariable.name}` : 'Workspace global environment',
+      matchType: nameMatch ? MATCH_TYPES.GLOBAL_ENVIRONMENT : MATCH_TYPES.VARIABLE,
+      environmentUid: environment?.uid
+    });
+
+    return results;
+  }, []);
 };

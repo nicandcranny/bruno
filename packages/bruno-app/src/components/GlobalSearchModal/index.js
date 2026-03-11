@@ -6,14 +6,16 @@ import {
   IconFolder,
   IconBox,
   IconFileText,
-  IconBook
+  IconBook,
+  IconWorld
 } from '@tabler/icons';
 import { flattenItems, isItemARequest, isItemAFolder, findParentItemInCollection } from 'utils/collections';
 import { addTab, focusTab } from 'providers/ReduxStore/slices/tabs';
 import { toggleCollectionItem, toggleCollection } from 'providers/ReduxStore/slices/collections';
 import { mountCollection } from 'providers/ReduxStore/slices/collections/actions';
 import { getDefaultRequestPaneTab } from 'utils/collections';
-import { normalizeQuery, isValidQuery, highlightText, sortResults, getTypeLabel, getItemPath } from './utils/searchUtils';
+import { selectGlobalEnvironment } from 'providers/ReduxStore/slices/global-environments';
+import { normalizeQuery, isValidQuery, highlightText, sortResults, getTypeLabel, getItemPath, searchGlobalEnvironments } from './utils/searchUtils';
 import { SEARCH_TYPES, MATCH_TYPES, SEARCH_CONFIG, DOCUMENTATION_RESULT } from './constants';
 import StyledWrapper from './StyledWrapper';
 
@@ -27,7 +29,10 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
 
   const collections = useSelector((state) => state.collections.collections);
+  const globalEnvironments = useSelector((state) => state.globalEnvironments.globalEnvironments);
   const tabs = useSelector((state) => state.tabs.tabs);
+  const activeTabUid = useSelector((state) => state.tabs.activeTabUid);
+  const activeTab = tabs.find((tab) => tab.uid === activeTabUid);
 
   const createCollectionResults = () => {
     const collectionResults = collections.map((collection) => ({
@@ -117,7 +122,10 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
       });
     });
 
-    return results;
+    return [
+      ...results,
+      ...searchGlobalEnvironments(globalEnvironments, searchTerms)
+    ];
   };
 
   const performSearch = (searchQuery) => {
@@ -157,7 +165,7 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
     debounceTimeoutRef.current = setTimeout(() => {
       performSearch(searchQuery);
     }, SEARCH_CONFIG.DEBOUNCE_DELAY);
-  }, [collections]); // Depend on collections to recreate when they change
+  }, [collections, globalEnvironments]); // Depend on search sources to recreate when they change
 
   const expandItemPath = (result) => {
     const collection = collections.find((c) => c.uid === result.collectionUid);
@@ -233,14 +241,36 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
   };
 
   const handleResultSelection = (result) => {
-    const targetCollection = collections.find((c) => c.uid === result.collectionUid);
-    ensureCollectionIsMounted(targetCollection);
-
     if (result.type === SEARCH_TYPES.DOCUMENTATION) {
       window.open('https://docs.usebruno.com/', '_blank');
       onClose();
       return;
     }
+
+    if (result.type === SEARCH_TYPES.GLOBAL_ENVIRONMENT) {
+      const existingTab = tabs.find((tab) => tab.type === 'global-environment-settings');
+      const targetCollectionUid = existingTab?.collectionUid || activeTab?.collectionUid || collections[0]?.uid;
+
+      if (result.environmentUid) {
+        dispatch(selectGlobalEnvironment({ environmentUid: result.environmentUid }));
+      }
+
+      if (existingTab) {
+        dispatch(focusTab({ uid: existingTab.uid }));
+      } else {
+        dispatch(addTab({
+          uid: targetCollectionUid ? `${targetCollectionUid}-global-environment-settings` : 'global-environment-settings',
+          collectionUid: targetCollectionUid,
+          type: 'global-environment-settings'
+        }));
+      }
+
+      onClose();
+      return;
+    }
+
+    const targetCollection = collections.find((c) => c.uid === result.collectionUid);
+    ensureCollectionIsMounted(targetCollection);
 
     expandItemPath(result);
 
@@ -337,6 +367,7 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
     const iconMap = {
       [SEARCH_TYPES.DOCUMENTATION]: IconBook,
       [SEARCH_TYPES.COLLECTION]: IconBox,
+      [SEARCH_TYPES.GLOBAL_ENVIRONMENT]: IconWorld,
       [SEARCH_TYPES.FOLDER]: IconFolder,
       [SEARCH_TYPES.REQUEST]: IconFileText
     };
@@ -359,7 +390,7 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
         <div className="command-k-modal" onClick={(e) => e.stopPropagation()}>
           <h1 id="search-modal-title" className="sr-only">Global Search</h1>
           <p id="search-modal-description" className="sr-only">
-            Search through collections, requests, folders, and documentation. Use arrow keys to navigate results and Enter to select.
+            Search through collections, global environments, requests, folders, and documentation. Use arrow keys to navigate results and Enter to select.
           </p>
           <div aria-live="polite" aria-atomic="true" className="sr-only">
             {results.length > 0 && query
@@ -374,7 +405,7 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
               <input
                 ref={inputRef}
                 type="text"
-                placeholder="Search collections, requests, or documentation..."
+                placeholder="Search collections, environments, requests, or documentation..."
                 value={query}
                 onChange={handleQueryChange}
                 onKeyDown={handleKeyNavigation}
@@ -383,7 +414,7 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
                 autoCorrect="off"
                 autoCapitalize="off"
                 spellCheck="false"
-                aria-label="Search collections, requests, or documentation"
+                aria-label="Search collections, environments, requests, or documentation"
                 aria-expanded={results.length > 0}
                 aria-controls="search-results"
                 aria-activedescendant={results.length > 0 ? `search-result-${selectedIndex}` : undefined}
@@ -459,9 +490,11 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
                         <div className="result-path">
                           {result.type === SEARCH_TYPES.DOCUMENTATION
                             ? result.description
-                            : result.type === SEARCH_TYPES.REQUEST
-                              ? highlightText(result.item.request?.url || '', query)
-                              : highlightText(result.path, query)}
+                            : result.type === SEARCH_TYPES.GLOBAL_ENVIRONMENT
+                              ? highlightText(result.description || result.path, query)
+                              : result.type === SEARCH_TYPES.REQUEST
+                                ? highlightText(result.item.request?.url || '', query)
+                                : highlightText(result.path, query)}
                         </div>
                       </div>
                       <div className="result-badges">
