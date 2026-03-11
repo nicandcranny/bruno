@@ -186,9 +186,6 @@ Even if you are not able to make contributions via code, please don't hesitate t
 
 ## TODOs
 
-1. Search request to be able to search for collection name
-2. Global search change to Cmd+P
-3. Always sort global environment by name A-Z
-4. Search feature on global environment
-5. Favorite feature for collections (stay on top)
-6. Add global environment to global search
+2. Search feature on global environment
+3. Favorite feature for collections (stay on top)
+4. Add global environment to global search

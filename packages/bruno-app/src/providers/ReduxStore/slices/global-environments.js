@@ -9,12 +9,15 @@ const initialState = {
   globalEnvironmentDraft: null
 };
 
+const sortEnvironmentsByName = (environments = []) =>
+  [...environments].sort((a, b) => (a?.name || '').localeCompare(b?.name || '', undefined, { sensitivity: 'base' }));
+
 export const globalEnvironmentsSlice = createSlice({
   name: 'global-environments',
   initialState,
   reducers: {
     updateGlobalEnvironments: (state, action) => {
-      state.globalEnvironments = action.payload?.globalEnvironments;
+      state.globalEnvironments = sortEnvironmentsByName(action.payload?.globalEnvironments || []);
       state.activeGlobalEnvironmentUid = action.payload?.activeGlobalEnvironmentUid;
     },
     _addGlobalEnvironment: (state, action) => {
@@ -26,6 +29,7 @@ export const globalEnvironmentsSlice = createSlice({
           variables,
           color
         });
+        state.globalEnvironments = sortEnvironmentsByName(state.globalEnvironments);
       }
     },
     _saveGlobalEnvironment: (state, action) => {
@@ -43,6 +47,7 @@ export const globalEnvironmentsSlice = createSlice({
         const environment = state.globalEnvironments.find((env) => env?.uid == globalEnvironmentUid);
         if (environment) {
           environment.name = name;
+          state.globalEnvironments = sortEnvironmentsByName(state.globalEnvironments);
         }
       }
     },
@@ -54,6 +59,7 @@ export const globalEnvironmentsSlice = createSlice({
           name,
           variables
         });
+        state.globalEnvironments = sortEnvironmentsByName(state.globalEnvironments);
       }
     },
     _selectGlobalEnvironment: (state, action) => {

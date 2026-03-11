@@ -11,6 +11,10 @@ class GlobalEnvironmentsStore {
     });
   }
 
+  sortEnvironmentsByName(environments = []) {
+    return [...environments].sort((a, b) => (a?.name || '').localeCompare(b?.name || '', undefined, { sensitivity: 'base' }));
+  }
+
   /**
    * Validates and filters environments array, removing invalid entries
    * @param {Array} environments - Array of environment objects to validate
@@ -79,6 +83,8 @@ class GlobalEnvironmentsStore {
 
     globalEnvironments = this.decryptGlobalEnvironmentVariables({ globalEnvironments });
 
+    globalEnvironments = this.sortEnvironmentsByName(globalEnvironments);
+
     return globalEnvironments;
   }
 
@@ -88,6 +94,8 @@ class GlobalEnvironmentsStore {
 
   setGlobalEnvironments(globalEnvironments) {
     globalEnvironments = this.filterValidEnvironments(globalEnvironments);
+
+    globalEnvironments = this.sortEnvironmentsByName(globalEnvironments);
 
     globalEnvironments = this.encryptGlobalEnvironmentVariables({ globalEnvironments });
     return this.store.set('environments', globalEnvironments);

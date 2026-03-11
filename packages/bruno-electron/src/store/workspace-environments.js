@@ -21,6 +21,10 @@ const ENV_FILE_EXTENSION = '.yml';
 class GlobalEnvironmentsManager {
   constructor() {}
 
+  sortEnvironmentsByName(environments = []) {
+    return [...environments].sort((a, b) => (a?.name || '').localeCompare(b?.name || '', undefined, { sensitivity: 'base' }));
+  }
+
   envHasSecrets(environment) {
     const secrets = _.filter(environment.variables, (v) => v.secret === true);
     return secrets && secrets.length > 0;
@@ -122,7 +126,7 @@ class GlobalEnvironmentsManager {
       const activeGlobalEnvironmentUid = await this.getActiveGlobalEnvironmentUid(workspacePath);
 
       return {
-        globalEnvironments: environments,
+        globalEnvironments: this.sortEnvironmentsByName(environments),
         activeGlobalEnvironmentUid
       };
     } catch (error) {
