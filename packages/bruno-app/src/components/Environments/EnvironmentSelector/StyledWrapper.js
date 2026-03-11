@@ -117,11 +117,68 @@ const Wrapper = styled.div`
     overflow: hidden;
   }
 
+  .environment-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0 0.75rem 0.5rem;
+
+    .environment-search-icon {
+      position: absolute;
+      left: 1.25rem;
+      color: ${(props) => props.theme.colors.text.muted};
+      pointer-events: none;
+    }
+
+    .environment-search-input {
+      width: 100%;
+      padding: 0.35rem 1.5rem 0.35rem 1.75rem;
+      font-size: ${(props) => props.theme.font.size.sm};
+      background: transparent;
+      border: 1px solid ${(props) => props.theme.border.border1};
+      border-radius: ${(props) => props.theme.border.radius.base};
+      color: ${(props) => props.theme.text};
+
+      &::placeholder {
+        color: ${(props) => props.theme.colors.text.muted};
+      }
+
+      &:focus {
+        outline: none;
+        border-color: ${(props) => props.theme.colors.accent};
+      }
+    }
+
+    .environment-search-clear {
+      position: absolute;
+      right: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.125rem;
+      background: transparent;
+      border: none;
+      color: ${(props) => props.theme.colors.text.muted};
+      border-radius: 0.1875rem;
+      cursor: pointer;
+
+      &:hover {
+        color: ${(props) => props.theme.text};
+      }
+    }
+  }
+
   .environment-list {
     flex: 1;
     overflow-y: auto;
     max-height: calc(75vh - 8rem);
     padding-bottom: 2.625rem;
+  }
+
+  .environment-no-results {
+    padding: 0.625rem 0.75rem;
+    color: ${(props) => props.theme.colors.text.muted};
+    font-size: ${(props) => props.theme.font.size.sm};
   }
 
   .dropdown-item-list {

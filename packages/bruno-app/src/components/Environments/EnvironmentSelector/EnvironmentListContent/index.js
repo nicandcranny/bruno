@@ -1,12 +1,15 @@
 import React from 'react';
-import { IconPlus, IconDownload, IconSettings } from '@tabler/icons';
+import { IconPlus, IconDownload, IconSettings, IconSearch, IconX } from '@tabler/icons';
 import ToolHint from 'components/ToolHint';
 import ColorBadge from 'components/ColorBadge';
 
 const EnvironmentListContent = ({
   environments,
+  hasEnvironments,
   activeEnvironmentUid,
   description,
+  searchText,
+  setSearchText,
   onEnvironmentSelect,
   onSettingsClick,
   onCreateClick,
@@ -14,8 +17,32 @@ const EnvironmentListContent = ({
 }) => {
   return (
     <div>
-      {environments && environments.length > 0 ? (
+      {hasEnvironments ? (
         <>
+          <div className="environment-search">
+            <IconSearch size={13} strokeWidth={1.5} className="environment-search-icon" />
+            <input
+              type="text"
+              placeholder="Search environments..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="environment-search-input"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+            />
+            {searchText ? (
+              <button
+                className="environment-search-clear"
+                title="Clear search"
+                onClick={() => setSearchText('')}
+                onMouseDown={(e) => e.preventDefault()}
+              >
+                <IconX size={12} strokeWidth={1.5} />
+              </button>
+            ) : null}
+          </div>
           <div className="environment-list">
             <div className="dropdown-item no-environment" onClick={() => onEnvironmentSelect(null)}>
               <span>No Environment</span>
@@ -31,18 +58,22 @@ const EnvironmentListContent = ({
               delayShow={1000}
             >
               <div>
-                {environments.map((env) => (
-                  <div
-                    key={env.uid}
-                    className={`dropdown-item ${env.uid === activeEnvironmentUid ? 'dropdown-item-active' : ''}`}
-                    onClick={() => onEnvironmentSelect(env)}
-                    data-tooltip-content={env.name}
-                    data-tooltip-hidden={env.name?.length < 90}
-                  >
-                    <ColorBadge color={env.color} size={8} />
-                    <span className="max-w-100% truncate no-wrap">{env.name}</span>
-                  </div>
-                ))}
+                {environments.length ? (
+                  environments.map((env) => (
+                    <div
+                      key={env.uid}
+                      className={`dropdown-item ${env.uid === activeEnvironmentUid ? 'dropdown-item-active' : ''}`}
+                      onClick={() => onEnvironmentSelect(env)}
+                      data-tooltip-content={env.name}
+                      data-tooltip-hidden={env.name?.length < 90}
+                    >
+                      <ColorBadge color={env.color} size={8} />
+                      <span className="max-w-100% truncate no-wrap">{env.name}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="environment-no-results">No matching environments</div>
+                )}
               </div>
             </ToolHint>
             <div className="dropdown-item configure-button">

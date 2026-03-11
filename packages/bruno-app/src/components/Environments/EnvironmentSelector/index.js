@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, forwardRef } from 'react';
+import React, { useMemo, useState, useRef, forwardRef, useEffect } from 'react';
 import find from 'lodash/find';
 import Dropdown from 'components/Dropdown';
 import { IconWorld, IconDatabase, IconCaretDown } from '@tabler/icons';
@@ -13,7 +13,7 @@ import ImportEnvironmentModal from 'components/Environments/Common/ImportEnviron
 import CreateGlobalEnvironment from 'components/WorkspaceHome/WorkspaceEnvironments/CreateEnvironment';
 import ToolHint from 'components/ToolHint';
 import StyledWrapper from './StyledWrapper';
-import { transparentize, toColorString, parseToRgb } from 'polished';
+import { transparentize } from 'polished';
 
 const TABS = [
   { id: 'collection', label: 'Collection', icon: <IconDatabase size={16} strokeWidth={1.5} /> },
@@ -182,6 +182,7 @@ const EnvironmentSelector = ({ collection }) => {
   const [showImportGlobalModal, setShowImportGlobalModal] = useState(false);
   const [showCreateCollectionModal, setShowCreateCollectionModal] = useState(false);
   const [showImportCollectionModal, setShowImportCollectionModal] = useState(false);
+  const [searchText, setSearchText] = useState('');
 
   const globalEnvironments = useSelector((state) => state.globalEnvironments.globalEnvironments);
   const activeGlobalEnvironmentUid = useSelector((state) => state.globalEnvironments.activeGlobalEnvironmentUid);
@@ -199,10 +200,27 @@ const EnvironmentSelector = ({ collection }) => {
     () => calculateDropdownWidth(environments, globalEnvironments),
     [environments, globalEnvironments]
   );
+  const visibleEnvironments = useMemo(() => {
+    const currentEnvironments = activeTab === 'collection' ? environments : globalEnvironments;
+    const normalizedSearch = searchText.trim().toLowerCase();
+
+    if (!normalizedSearch) {
+      return currentEnvironments;
+    }
+
+    return currentEnvironments.filter((env) => env?.name?.toLowerCase().includes(normalizedSearch));
+  }, [activeTab, environments, globalEnvironments, searchText]);
 
   const description = EMPTY_STATE_DESCRIPTIONS[activeTab];
 
-  const hideDropdown = () => dropdownTippyRef.current?.hide();
+  useEffect(() => {
+    setSearchText('');
+  }, [activeTab]);
+
+  const hideDropdown = () => {
+    setSearchText('');
+    dropdownTippyRef.current?.hide();
+  };
 
   const handleEnvironmentSelect = (environment) => {
     const action
@@ -290,9 +308,12 @@ const EnvironmentSelector = ({ collection }) => {
           {/* Tab Content */}
           <div className="tab-content">
             <EnvironmentListContent
-              environments={activeTab === 'collection' ? environments : globalEnvironments}
+              environments={visibleEnvironments}
+              hasEnvironments={(activeTab === 'collection' ? environments : globalEnvironments).length > 0}
               activeEnvironmentUid={activeTab === 'collection' ? activeEnvironmentUid : activeGlobalEnvironmentUid}
               description={description}
+              searchText={searchText}
+              setSearchText={setSearchText}
               onEnvironmentSelect={handleEnvironmentSelect}
               onSettingsClick={handleSettingsClick}
               onCreateClick={handleCreateClick}

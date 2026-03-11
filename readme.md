@@ -186,6 +186,6 @@ Even if you are not able to make contributions via code, please don't hesitate t
 
 ## TODOs
 
-2. Search feature on global environment
-3. Favorite feature for collections (stay on top)
-4. Add global environment to global search
+1. Search feature on global environment
+2. Favorite feature for collections (stay on top)
+3. Add global environment to global search
