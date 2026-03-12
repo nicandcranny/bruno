@@ -286,18 +286,11 @@ export const switchWorkspace = (workspaceUid) => {
 
     if (scratchCollection?.uid) {
       const overviewTabUid = `${scratchCollection.uid}-overview`;
-      const environmentsTabUid = `${scratchCollection.uid}-environments`;
 
       dispatch(addTab({
         uid: overviewTabUid,
         collectionUid: scratchCollection.uid,
         type: 'workspaceOverview'
-      }));
-
-      dispatch(addTab({
-        uid: environmentsTabUid,
-        collectionUid: scratchCollection.uid,
-        type: 'workspaceEnvironments'
       }));
 
       dispatch(focusTab({

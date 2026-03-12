@@ -16,6 +16,7 @@ import { toggleCollectionItem, toggleCollection } from 'providers/ReduxStore/sli
 import { mountCollection, selectEnvironment } from 'providers/ReduxStore/slices/collections/actions';
 import { getDefaultRequestPaneTab } from 'utils/collections';
 import { selectGlobalEnvironment } from 'providers/ReduxStore/slices/global-environments';
+import { openSidebarSection } from 'utils/sidebar';
 import {
   parseSearchQuery,
   isValidQuery,
@@ -289,23 +290,11 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
     }
 
     if (result.type === SEARCH_TYPES.GLOBAL_ENVIRONMENT) {
-      const existingTab = tabs.find((tab) => tab.type === 'global-environment-settings');
-      const targetCollectionUid = existingTab?.collectionUid || activeTab?.collectionUid || collections[0]?.uid;
-
       if (result.environmentUid) {
         dispatch(selectGlobalEnvironment({ environmentUid: result.environmentUid }));
       }
 
-      if (existingTab) {
-        dispatch(focusTab({ uid: existingTab.uid }));
-      } else {
-        dispatch(addTab({
-          uid: targetCollectionUid ? `${targetCollectionUid}-global-environment-settings` : 'global-environment-settings',
-          collectionUid: targetCollectionUid,
-          type: 'global-environment-settings'
-        }));
-      }
-
+      openSidebarSection('global-variables');
       onClose();
       return;
     }

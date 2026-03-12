@@ -7,7 +7,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { updateLeftSidebarWidth, updateIsDragging } from 'providers/ReduxStore/slices/app';
 import CollectionsSection from './Sections/CollectionsSection/index';
 import ApiSpecsSection from './Sections/ApiSpecsSection/index';
-import { IconBox, IconFileCode } from '@tabler/icons';
+import GlobalVariablesSection from './Sections/GlobalVariablesSection';
+import { IconBox, IconFileCode, IconWorld } from '@tabler/icons';
 
 const MIN_LEFT_SIDEBAR_WIDTH = 220;
 const MAX_LEFT_SIDEBAR_WIDTH = 600;
@@ -31,6 +32,15 @@ const SIDEBAR_SECTIONS = [
       collapsible: false
     }),
     component: ApiSpecsSection
+  },
+  {
+    id: 'global-variables',
+    title: 'Global Variables',
+    icon: IconWorld,
+    getProps: () => ({
+      collapsible: false
+    }),
+    component: GlobalVariablesSection
   }
 ];
 
@@ -108,8 +118,19 @@ const Sidebar = () => {
       setCollectionSearchTrigger((value) => value + 1);
     };
 
+    const handleSidebarSectionOpen = (event) => {
+      const sectionId = event?.detail?.sectionId;
+      if (sectionId) {
+        setActiveSectionId(sectionId);
+      }
+    };
+
     window.addEventListener('sidebar-search-open', handleSidebarSearch);
-    return () => window.removeEventListener('sidebar-search-open', handleSidebarSearch);
+    window.addEventListener('sidebar-section-open', handleSidebarSectionOpen);
+    return () => {
+      window.removeEventListener('sidebar-search-open', handleSidebarSearch);
+      window.removeEventListener('sidebar-section-open', handleSidebarSectionOpen);
+    };
   }, []);
 
   return (
@@ -123,6 +144,7 @@ const Sidebar = () => {
                   <SidebarContent
                     sections={SIDEBAR_SECTIONS}
                     activeSectionId={activeSectionId}
+                    activeButtonId={activeSectionId}
                     onSectionChange={setActiveSectionId}
                     sectionContext={{
                       collectionSearchTrigger

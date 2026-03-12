@@ -72,6 +72,7 @@ You can explore our [paid versions](https://www.usebruno.com/pricing) to see if 
 - [License 📄](#license-)
 - [Differences from Original Bruno](#differences-from-original-bruno)
   - [Global Search Improvement](#global-search-improvement)
+  - [Activity Bar Menu](#activity-bar-menu)
   - [Improve Request Search](#improve-request-search)
   - [Minor Bug Fixes](#minor-bug-fixes)
 - [TODOs](#todos)
@@ -198,6 +199,10 @@ Even if you are not able to make contributions via code, please don't hesitate t
   - `col:` for collections
   - `req:` for requests
   - `doc:` for documents
+
+### Activity Bar Menu
+
+- Create a new activity bar menu (vs-code like) and move the menu to choose between collections, API specs, and global environment variables to the activity bar menu
 
 ### Improve Request Search
 

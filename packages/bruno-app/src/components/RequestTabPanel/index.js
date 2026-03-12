@@ -181,7 +181,7 @@ const RequestTabPanel = () => {
   }
 
   if (focusedTab.type === 'global-environment-settings') {
-    return <GlobalEnvironmentSettings />;
+    return <GlobalEnvironmentSettings environmentUid={focusedTab.environmentUid} />;
   }
 
   if (focusedTab.type === 'preferences') {

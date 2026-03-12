@@ -1,0 +1,63 @@
+import styled from 'styled-components';
+
+const StyledWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+
+  .global-variables-search {
+    padding: 8px;
+    border-bottom: 1px solid ${(props) => props.theme.sidebar.collection.item.hoverBg};
+  }
+
+  .global-variables-search-input {
+    width: 100%;
+  }
+
+  .global-variables-list {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 8px 6px;
+    gap: 2px;
+  }
+
+  .global-variable-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 30px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: ${(props) => props.theme.sidebar.color};
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    &:hover {
+      background: ${(props) => props.theme.sidebar.collection.item.hoverBg};
+    }
+
+    &.active {
+      background: ${(props) => props.theme.sidebar.collection.item.bg};
+    }
+  }
+
+  .global-variable-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .global-variables-empty {
+    padding: 12px 10px;
+    color: ${(props) => props.theme.sidebar.muted};
+    font-size: 12px;
+  }
+`;
+
+export default StyledWrapper;

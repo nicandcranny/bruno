@@ -1,14 +1,15 @@
-const SidebarContent = ({ sections, activeSectionId, onSectionChange, sectionContext = {} }) => {
-  const activeSection = sections.find((section) => section.id === activeSectionId) || sections[0];
-  const ActiveSectionComponent = activeSection.component;
-  const activeSectionProps = activeSection.getProps ? activeSection.getProps(sectionContext) : {};
+const SidebarContent = ({ sections, activeSectionId, activeButtonId, onSectionChange, sectionContext = {} }) => {
+  const panelSections = sections.filter((section) => section.component);
+  const activeSection = panelSections.find((section) => section.id === activeSectionId) || panelSections[0];
+  const ActiveSectionComponent = activeSection?.component;
+  const activeSectionProps = activeSection?.getProps ? activeSection.getProps(sectionContext) : {};
 
   return (
     <div className="sidebar-activity-layout">
       <div className="sidebar-activity-bar" aria-label="Sidebar sections">
         {sections.map((section) => {
           const Icon = section.icon;
-          const isActive = section.id === activeSection.id;
+          const isActive = section.id === activeButtonId;
 
           return (
             <button
@@ -27,7 +28,7 @@ const SidebarContent = ({ sections, activeSectionId, onSectionChange, sectionCon
       </div>
 
       <div className="sidebar-panel">
-        <ActiveSectionComponent {...activeSectionProps} />
+        {ActiveSectionComponent && <ActiveSectionComponent {...activeSectionProps} />}
       </div>
     </div>
   );

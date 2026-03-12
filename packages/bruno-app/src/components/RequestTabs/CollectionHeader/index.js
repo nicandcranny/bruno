@@ -12,13 +12,14 @@ import {
   IconX,
   IconCheck,
   IconFolder,
-  IconUpload
+  IconUpload,
+  IconWorld
 } from '@tabler/icons';
 import OpenAPISyncIcon from 'components/Icons/OpenAPISync';
 import { switchWorkspace, renameWorkspaceAction, exportWorkspaceAction } from 'providers/ReduxStore/slices/workspaces/actions';
 import { updateWorkspace } from 'providers/ReduxStore/slices/workspaces';
 import { showInFolder } from 'providers/ReduxStore/slices/collections/actions';
-import { addTab, focusTab } from 'providers/ReduxStore/slices/tabs';
+import { addTab, focusTab, updateTab } from 'providers/ReduxStore/slices/tabs';
 import { uuid } from 'utils/common';
 import toast from 'react-hot-toast';
 import Dropdown from 'components/Dropdown';
@@ -40,6 +41,8 @@ const CollectionHeader = ({ collection, isScratchCollection }) => {
   const activeWorkspaceUid = useSelector((state) => state.workspaces.activeWorkspaceUid);
   const collections = useSelector((state) => state.collections.collections);
   const tabs = useSelector((state) => state.tabs.tabs);
+  const activeTabUid = useSelector((state) => state.tabs.activeTabUid);
+  const globalEnvironments = useSelector((state) => state.globalEnvironments.globalEnvironments);
 
   // Get the current active workspace
   const currentWorkspace = workspaces.find((w) => w.uid === activeWorkspaceUid);
@@ -126,6 +129,14 @@ const CollectionHeader = ({ collection, isScratchCollection }) => {
   const workspaceTabCount = currentWorkspace?.scratchCollectionUid
     ? getTabCount(currentWorkspace.scratchCollectionUid)
     : 0;
+  const globalEnvironmentTabUid = currentWorkspace?.scratchCollectionUid
+    ? `${currentWorkspace.scratchCollectionUid}-global-environment-settings`
+    : null;
+  const globalEnvironmentTabCount = globalEnvironmentTabUid
+    ? tabs.filter((tab) => tab.uid === globalEnvironmentTabUid).length
+    : 0;
+  const activeGlobalEnvironmentTab = tabs.find((tab) => tab.uid === activeTabUid && tab.type === 'global-environment-settings');
+  const selectedGlobalEnvironment = globalEnvironments.find((environment) => environment.uid === activeGlobalEnvironmentTab?.environmentUid);
 
   // Display name and icon based on context
   const displayName = isScratchCollection
@@ -158,6 +169,33 @@ const CollectionHeader = ({ collection, isScratchCollection }) => {
         })
       );
     }
+  };
+
+  const handleSwitchToGlobalEnvironment = (environment) => {
+    switcherRef.current?.hide();
+
+    if (!globalEnvironmentTabUid || !currentWorkspace?.scratchCollectionUid || !environment?.uid) {
+      return;
+    }
+
+    const existingTab = tabs.find((tab) => tab.uid === globalEnvironmentTabUid);
+    if (existingTab) {
+      dispatch(updateTab({
+        uid: globalEnvironmentTabUid,
+        environmentUid: environment.uid,
+        tabName: environment.name
+      }));
+      dispatch(focusTab({ uid: globalEnvironmentTabUid }));
+      return;
+    }
+
+    dispatch(addTab({
+      uid: globalEnvironmentTabUid,
+      collectionUid: currentWorkspace.scratchCollectionUid,
+      type: 'global-environment-settings',
+      environmentUid: environment.uid,
+      tabName: environment.name
+    }));
   };
 
   // Collection action handlers
@@ -390,6 +428,28 @@ const CollectionHeader = ({ collection, isScratchCollection }) => {
                       <span className="dropdown-tab-count">{workspaceTabCount}</span>
                     )}
                   </div>
+                  {selectedGlobalEnvironment && (
+                    <>
+                      <div className="dropdown-separator" />
+                      <div className="label-item">Global Variables</div>
+                      <div
+                        className={classNames('dropdown-item', {
+                          'dropdown-item-active': activeTabUid === globalEnvironmentTabUid
+                        })}
+                        onClick={() => handleSwitchToGlobalEnvironment(selectedGlobalEnvironment)}
+                      >
+                        <div className="dropdown-icon">
+                          <IconWorld size={16} strokeWidth={1.5} />
+                        </div>
+                        <span className="dropdown-label">
+                          {selectedGlobalEnvironment.name}
+                        </span>
+                        {globalEnvironmentTabCount > 0 && (
+                          <span className="dropdown-tab-count">{globalEnvironmentTabCount}</span>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </>
               )}
 

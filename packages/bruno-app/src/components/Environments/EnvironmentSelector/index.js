@@ -14,6 +14,7 @@ import CreateGlobalEnvironment from 'components/WorkspaceHome/WorkspaceEnvironme
 import ToolHint from 'components/ToolHint';
 import StyledWrapper from './StyledWrapper';
 import { transparentize } from 'polished';
+import { openSidebarSection } from 'utils/sidebar';
 
 const TABS = [
   { id: 'collection', label: 'Collection', icon: <IconDatabase size={16} strokeWidth={1.5} /> },
@@ -240,6 +241,12 @@ const EnvironmentSelector = ({ collection }) => {
 
   const handleSettingsClick = () => {
     const isCollection = activeTab === 'collection';
+    if (!isCollection) {
+      openSidebarSection('global-variables');
+      hideDropdown();
+      return;
+    }
+
     dispatch(
       addTab({
         uid: `${collection.uid}-${isCollection ? 'environment' : 'global-environment'}-settings`,
@@ -326,7 +333,7 @@ const EnvironmentSelector = ({ collection }) => {
       {showCreateGlobalModal && (
         <CreateGlobalEnvironment
           onClose={() => setShowCreateGlobalModal(false)}
-          onEnvironmentCreated={() => openEnvironmentSettingsTab('global-environment')}
+          onEnvironmentCreated={() => openSidebarSection('global-variables')}
         />
       )}
 
@@ -334,7 +341,7 @@ const EnvironmentSelector = ({ collection }) => {
         <ImportEnvironmentModal
           type="global"
           onClose={() => setShowImportGlobalModal(false)}
-          onEnvironmentCreated={() => openEnvironmentSettingsTab('global-environment')}
+          onEnvironmentCreated={() => openSidebarSection('global-variables')}
         />
       )}
 

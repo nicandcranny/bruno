@@ -19,7 +19,7 @@ export const tabsSlice = createSlice({
   initialState,
   reducers: {
     addTab: (state, action) => {
-      const { uid, collectionUid, type, requestPaneTab, preview, exampleUid, itemUid } = action.payload;
+      const { uid, collectionUid, type, requestPaneTab, preview, exampleUid, itemUid, environmentUid, tabName } = action.payload;
 
       const nonReplaceableTabTypes = [
         'variables',
@@ -70,6 +70,8 @@ export const tabsSlice = createSlice({
           preview: preview !== undefined
             ? preview
             : !nonReplaceableTabTypes.includes(type),
+          ...(environmentUid ? { environmentUid } : {}),
+          ...(tabName ? { tabName } : {}),
           ...(uid ? { folderUid: uid } : {}),
           ...(exampleUid ? { exampleUid } : {}),
           ...(itemUid ? { itemUid } : {})
@@ -94,10 +96,19 @@ export const tabsSlice = createSlice({
         preview: preview !== undefined
           ? preview
           : !nonReplaceableTabTypes.includes(type),
+        ...(environmentUid ? { environmentUid } : {}),
+        ...(tabName ? { tabName } : {}),
         ...(exampleUid ? { exampleUid } : {}),
         ...(itemUid ? { itemUid } : {})
       });
       state.activeTabUid = uid;
+    },
+    updateTab: (state, action) => {
+      const { uid, ...updates } = action.payload;
+      const tab = find(state.tabs, (t) => t.uid === uid);
+      if (tab) {
+        Object.assign(tab, updates);
+      }
     },
     focusTab: (state, action) => {
       const { uid } = action.payload;
@@ -273,6 +284,7 @@ export const tabsSlice = createSlice({
 
 export const {
   addTab,
+  updateTab,
   focusTab,
   switchTab,
   updateRequestPaneTabWidth,

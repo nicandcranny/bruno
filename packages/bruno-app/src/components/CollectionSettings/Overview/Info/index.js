@@ -7,6 +7,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import ShareCollection from 'components/ShareCollection/index';
 import GenerateDocumentation from 'components/Sidebar/Collections/Collection/GenerateDocumentation';
 import { addTab } from 'providers/ReduxStore/slices/tabs';
+import { openSidebarSection } from 'utils/sidebar';
 import StyledWrapper from './StyledWrapper';
 
 const Info = ({ collection }) => {
@@ -70,15 +71,7 @@ const Info = ({ collection }) => {
                 <button
                   type="button"
                   className="text-link cursor-pointer hover:underline text-left bg-transparent"
-                  onClick={() => {
-                    dispatch(
-                      addTab({
-                        uid: `${collection.uid}-global-environment-settings`,
-                        collectionUid: collection.uid,
-                        type: 'global-environment-settings'
-                      })
-                    );
-                  }}
+                  onClick={() => openSidebarSection('global-variables')}
                 >
                   {globalEnvironmentCount} global environment{globalEnvironmentCount !== 1 ? 's' : ''}
                 </button>
