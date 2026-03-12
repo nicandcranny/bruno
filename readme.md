@@ -70,6 +70,10 @@ You can explore our [paid versions](https://www.usebruno.com/pricing) to see if 
 - [Contribute 👩‍💻🧑‍💻](#contribute-)
 - [Authors](#authors)
 - [License 📄](#license-)
+- [Differences from Original Bruno](#differences-from-original-bruno)
+  - [Global Search Improvement](#global-search-improvement)
+  - [Improve Request Search](#improve-request-search)
+  - [Minor Bug Fixes](#minor-bug-fixes)
 - [TODOs](#todos)
 
 ## Installation
@@ -184,7 +188,29 @@ Even if you are not able to make contributions via code, please don't hesitate t
 
 [MIT](license.md)
 
+## Differences from Original Bruno
+
+### Global Search Improvement
+
+- Global search now supports global environment variables
+- Global search now supports prefix for targetted search: 
+  - `env:` for environment variable
+  - `col:` for collections
+  - `req:` for requests
+  - `doc:` for documents
+
+### Improve Request Search
+
+Improve request search on the sidebar to allow search for collection names
+
+### Minor Bug Fixes
+
+- Flaky global environment variables sort is fixed
+
 ## TODOs
 
 1. Favorite feature for collections (stay on top)
-2. Add global environment to global search
+2. Fix global search on go to env variable
+3. Add set-env: prefix to global search
+4. Add Git push on workspace: Let's build vscode-like per file diffs feature where i see the diffs, stage file, unstage file, commit, push, and pull
+5. Allow search folder on sidebar search

@@ -38,7 +38,7 @@ import Collections from 'components/Sidebar/Collections';
 import SidebarSection from 'components/Sidebar/SidebarSection';
 import { openDevtoolsAndSwitchToTerminal } from 'utils/terminal';
 
-const CollectionsSection = () => {
+const CollectionsSection = ({ collapsible = true, searchTrigger = 0 }) => {
   const [showSearch, setShowSearch] = useState(false);
   const dispatch = useDispatch();
 
@@ -75,6 +75,20 @@ const CollectionsSection = () => {
     window.addEventListener('sidebar-search-open', handleSidebarSearch);
     return () => window.removeEventListener('sidebar-search-open', handleSidebarSearch);
   }, []);
+
+  useEffect(() => {
+    if (!searchTrigger) {
+      return;
+    }
+
+    setShowSearch(true);
+    setTimeout(() => {
+      const searchInput = document.querySelector('.collection-search-input');
+      if (searchInput) {
+        searchInput.focus();
+      }
+    }, 50);
+  }, [searchTrigger]);
   // Default to true (don't show modal) so that:
   // 1. Existing users who upgrade (no hasSeenWelcomeModal in their prefs) don't see it
   // 2. The modal doesn't flash before preferences are loaded from the electron process
@@ -411,6 +425,7 @@ const CollectionsSection = () => {
         title="Collections"
         icon={IconBox}
         actions={sectionActions}
+        collapsible={collapsible}
       >
         <Collections
           showSearch={showSearch}

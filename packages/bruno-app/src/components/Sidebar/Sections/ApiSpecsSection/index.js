@@ -10,7 +10,7 @@ import CreateApiSpec from 'components/Sidebar/ApiSpecs/CreateApiSpec';
 import ApiSpecs from 'components/Sidebar/ApiSpecs';
 import SidebarSection from 'components/Sidebar/SidebarSection';
 
-const ApiSpecsSection = () => {
+const ApiSpecsSection = ({ collapsible = true }) => {
   const dispatch = useDispatch();
   const [createApiSpecModalOpen, setCreateApiSpecModalOpen] = useState(false);
 
@@ -69,6 +69,7 @@ const ApiSpecsSection = () => {
         icon={IconFileCode}
         actions={sectionActions}
         className="api-specs-section"
+        collapsible={collapsible}
       >
         <ApiSpecs />
       </SidebarSection>

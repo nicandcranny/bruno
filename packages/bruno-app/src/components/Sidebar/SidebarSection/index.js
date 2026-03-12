@@ -10,55 +10,68 @@ const SidebarSection = ({
   icon: Icon,
   actions,
   children,
-  className = ''
+  className = '',
+  collapsible = true
 }) => {
   const { isExpanded, setSectionExpanded, getExpandedCount } = useSidebarAccordion();
-  const [localExpanded, setLocalExpanded] = useState(() => isExpanded(id));
+  const [localExpanded, setLocalExpanded] = useState(() => (collapsible ? isExpanded(id) : true));
   const sectionRef = useRef(null);
 
-  // Sync with context
   useEffect(() => {
+    if (!collapsible) {
+      setLocalExpanded(true);
+      return;
+    }
+
     const expanded = isExpanded(id);
     setLocalExpanded(expanded);
-  }, [id, isExpanded]);
+  }, [collapsible, id, isExpanded]);
 
   const handleToggle = () => {
+    if (!collapsible) {
+      return;
+    }
+
     const newExpanded = !localExpanded;
     setLocalExpanded(newExpanded);
     setSectionExpanded(id, newExpanded);
   };
 
-  const expandedCount = getExpandedCount();
-  // Check if this is the only expanded section
-  const isOnlyExpanded = expandedCount === 1 && localExpanded;
+  const expandedCount = collapsible ? getExpandedCount() : 1;
+  const isOnlyExpanded = localExpanded && expandedCount === 1;
 
   return (
     <StyledWrapper className={className}>
       <div
         ref={sectionRef}
-        className={`sidebar-section ${localExpanded ? 'expanded' : ''} ${isOnlyExpanded ? 'single-expanded' : ''} ${expandedCount > 1 && localExpanded ? 'multi-expanded' : ''}`}
+        className={`sidebar-section ${localExpanded ? 'expanded' : ''} ${isOnlyExpanded ? 'single-expanded' : ''} ${expandedCount > 1 && localExpanded ? 'multi-expanded' : ''} ${collapsible ? 'collapsible-section' : 'static-section'}`}
       >
         <div
-          className="section-header"
-          onClick={handleToggle}
+          className={`section-header ${collapsible ? 'section-header-collapsible' : 'section-header-static'}`}
+          onClick={collapsible ? handleToggle : undefined}
         >
           <div className="section-header-left">
             <div
               className="section-icon-wrapper"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault(); handleToggle();
-                }
-              }}
+              tabIndex={collapsible ? 0 : -1}
+              onKeyDown={collapsible
+                ? (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleToggle();
+                    }
+                  }
+                : undefined}
             >
-              <ActionIcon size="sm" className="section-toggle">
-                {localExpanded ? (
-                  <IconChevronDown size={12} stroke={1.5} />
-                ) : (
-                  <IconChevronRight size={12} stroke={1.5} />
-                )}
-              </ActionIcon>
+              {collapsible && (
+                <ActionIcon size="sm" className="section-toggle">
+                  {localExpanded ? (
+                    <IconChevronDown size={12} stroke={1.5} />
+                  ) : (
+                    <IconChevronRight size={12} stroke={1.5} />
+                  )}
+                </ActionIcon>
+              )}
               {Icon && <Icon size={14} stroke={1.5} className="section-icon" />}
             </div>
             <span className="section-title">{title}</span>

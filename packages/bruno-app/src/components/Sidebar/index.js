@@ -7,6 +7,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { updateLeftSidebarWidth, updateIsDragging } from 'providers/ReduxStore/slices/app';
 import CollectionsSection from './Sections/CollectionsSection/index';
 import ApiSpecsSection from './Sections/ApiSpecsSection/index';
+import { IconBox, IconFileCode } from '@tabler/icons';
 
 const MIN_LEFT_SIDEBAR_WIDTH = 220;
 const MAX_LEFT_SIDEBAR_WIDTH = 600;
@@ -14,10 +15,21 @@ const MAX_LEFT_SIDEBAR_WIDTH = 600;
 const SIDEBAR_SECTIONS = [
   {
     id: 'collections',
+    title: 'Collections',
+    icon: IconBox,
+    getProps: ({ collectionSearchTrigger }) => ({
+      collapsible: false,
+      searchTrigger: collectionSearchTrigger
+    }),
     component: CollectionsSection
   },
   {
     id: 'api-specs',
+    title: 'API Specs',
+    icon: IconFileCode,
+    getProps: () => ({
+      collapsible: false
+    }),
     component: ApiSpecsSection
   }
 ];
@@ -27,6 +39,8 @@ const Sidebar = () => {
   const sidebarCollapsed = useSelector((state) => state.app.sidebarCollapsed);
   const [asideWidth, setAsideWidth] = useState(leftSidebarWidth);
   const lastWidthRef = useRef(leftSidebarWidth);
+  const [activeSectionId, setActiveSectionId] = useState('collections');
+  const [collectionSearchTrigger, setCollectionSearchTrigger] = useState(0);
 
   const dispatch = useDispatch();
   const [dragging, setDragging] = useState(false);
@@ -88,6 +102,16 @@ const Sidebar = () => {
     setAsideWidth(leftSidebarWidth);
   }, [leftSidebarWidth]);
 
+  useEffect(() => {
+    const handleSidebarSearch = () => {
+      setActiveSectionId('collections');
+      setCollectionSearchTrigger((value) => value + 1);
+    };
+
+    window.addEventListener('sidebar-search-open', handleSidebarSearch);
+    return () => window.removeEventListener('sidebar-search-open', handleSidebarSearch);
+  }, []);
+
   return (
     <SidebarAccordionProvider defaultExpanded={['collections']}>
       <StyledWrapper className="flex relative h-full">
@@ -98,6 +122,11 @@ const Sidebar = () => {
                 <div className="sidebar-sections flex flex-col flex-1">
                   <SidebarContent
                     sections={SIDEBAR_SECTIONS}
+                    activeSectionId={activeSectionId}
+                    onSectionChange={setActiveSectionId}
+                    sectionContext={{
+                      collectionSearchTrigger
+                    }}
                   />
                 </div>
               </div>

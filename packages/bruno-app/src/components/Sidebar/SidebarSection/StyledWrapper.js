@@ -35,7 +35,7 @@ const StyledWrapper = styled.div`
     user-select: none;
     transition: background-color 0.15s ease;
     flex-shrink: 0;
-    border-bottom: 1px solid transparent;
+    border-bottom: 1px solid ${(props) => props.theme.sidebar.collection.item.hoverBg};
 
     .section-header-left {
       display: flex;
@@ -43,63 +43,75 @@ const StyledWrapper = styled.div`
       gap: 6px;
       flex: 1;
       min-width: 0;
-      cursor: pointer;
+    }
+  }
 
+  .section-header-collapsible {
+    cursor: pointer;
+
+    .section-header-left {
+      cursor: pointer;
 
       &:hover {
         .section-toggle {
           display: flex;
-        }
-
-        .section-toggle {
           background: ${(props) => props.theme.dropdown.hoverBg};
           color: ${(props) => props.theme.text} !important;
         }
 
         .section-icon {
-            display: none;
-          }
+          display: none;
         }
       }
     }
+  }
+
+  .section-header-static {
+    padding: 8px 8px 8px 10px;
 
     .section-icon-wrapper {
-      width: 24px;
-      height: 24px;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .section-toggle {
-      display: none;
-    }
-
-    .section-icon {
-      display: flex;
-      align-items: center;
-      justify-content: center;
       width: 16px;
       height: 16px;
-      color: ${(props) => props.theme.sidebar.muted};
     }
+  }
 
-    .section-title {
-      color: ${(props) => props.theme.sidebar.color};
-      font-size: 12px;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+  .section-icon-wrapper {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-    .section-actions {
-      display: flex;
-      align-items: center;
-      gap: 1px;
-      flex-shrink: 0;
-    }
+  .section-toggle {
+    display: none;
+  }
+
+  .section-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    color: ${(props) => props.theme.sidebar.muted};
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    color: ${(props) => props.theme.sidebar.color};
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .section-actions {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    flex-shrink: 0;
   }
 
   .section-content {
