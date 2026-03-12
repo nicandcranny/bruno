@@ -2,12 +2,16 @@ import styled from 'styled-components';
 
 const StyledWrapper = styled.div`
   height: 100%;
+  min-width: 0;
+  width: 100%;
 
   .sidebar-section {
     display: flex;
     flex-direction: column;
     min-height: 0;
+    min-width: 0;
     height: 100%;
+    width: 100%;
 
     &.expanded {
       flex: 1 1 0%;
@@ -36,6 +40,8 @@ const StyledWrapper = styled.div`
     transition: background-color 0.15s ease;
     flex-shrink: 0;
     border-bottom: 1px solid ${(props) => props.theme.sidebar.collection.item.hoverBg};
+    min-width: 0;
+    width: 100%;
 
     .section-header-left {
       display: flex;
@@ -112,6 +118,7 @@ const StyledWrapper = styled.div`
     align-items: center;
     gap: 1px;
     flex-shrink: 0;
+    min-width: 0;
   }
 
   .section-content {
@@ -119,9 +126,11 @@ const StyledWrapper = styled.div`
     flex-direction: column;
     flex: 1 1 0%;
     min-height: 0;
+    min-width: 0;
     overflow-y: auto;
     overflow-x: hidden;
     position: relative;
+    width: 100%;
   }
 `;
 

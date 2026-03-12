@@ -486,7 +486,7 @@ const Collection = ({ collection, searchText }) => {
       )}
       <CollectionItemDragPreview />
       <div
-        className={collectionRowClassName}
+        className={`${collectionRowClassName} w-full`}
         ref={(node) => {
           collectionRef.current = node;
           drag(drop(node));
@@ -498,7 +498,7 @@ const Collection = ({ collection, searchText }) => {
         data-testid="sidebar-collection-row"
       >
         <div
-          className="flex flex-grow items-center overflow-hidden"
+          className="flex flex-grow items-center overflow-hidden min-w-0"
           onClick={handleClick}
           onDoubleClick={handleDoubleClick}
           onContextMenu={handleRightClick}
@@ -513,7 +513,7 @@ const Collection = ({ collection, searchText }) => {
               onDoubleClick={handleCollectionDoubleClick}
             />
           </ActionIcon>
-          <div className="ml-1 w-full" id="sidebar-collection-name" title={collection.name}>
+          <div className="ml-1 w-full min-w-0" id="sidebar-collection-name" title={collection.name}>
             {collection.name}
           </div>
           {isLoading ? <IconLoader2 className="animate-spin mx-1" size={18} strokeWidth={1.5} /> : null}

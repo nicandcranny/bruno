@@ -683,7 +683,7 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
         initialName={getInitialExampleName(item)}
       />
       <div
-        className={itemRowClassName}
+        className={`${itemRowClassName} w-full`}
         ref={(node) => {
           ref.current = node;
           drag(drop(node));
@@ -695,7 +695,7 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
         onContextMenu={handleContextMenu}
         data-testid="sidebar-collection-item-row"
       >
-        <div className="flex items-center h-full w-full">
+        <div className="flex items-center h-full w-full min-w-0">
           {indents && indents.length
             ? indents.map((i) => (
                 <div
@@ -710,7 +710,7 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
               ))
             : null}
           <div
-            className="flex flex-grow items-center h-full overflow-hidden"
+            className="flex flex-grow items-center h-full overflow-hidden min-w-0"
             style={{ paddingLeft: 8 }}
             onClick={handleClick}
             onDoubleClick={handleDoubleClick}
@@ -742,7 +742,7 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
               </ActionIcon>
             ) : null}
 
-            <div className="ml-1 flex w-full h-full items-center overflow-hidden">
+            <div className="ml-1 flex w-full h-full min-w-0 items-center overflow-hidden">
               <CollectionItemIcon item={item} />
               <span className="item-name" title={item.name}>
                 {item.name}

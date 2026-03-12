@@ -1,12 +1,17 @@
 import styled from 'styled-components';
 
 const Wrapper = styled.div`
+  min-width: 0;
+  width: 100%;
+
   .collection-name {
     height: 1.6rem;
     cursor: pointer;
     user-select: none;
     padding-left: 4px;
     border: ${(props) => props.theme.dragAndDrop.borderStyle} transparent;
+    min-width: 0;
+    width: 100%;
 
     .rotate-90 {
       transform: rotateZ(90deg);
@@ -94,6 +99,7 @@ const Wrapper = styled.div`
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
+    min-width: 0;
   }
 
   .indent-block {
@@ -106,6 +112,8 @@ const Wrapper = styled.div`
     height: 1.6rem;
     font-size: ${(props) => props.theme.font.size.sm};
     color: ${(props) => props.theme.sidebar.muted};
+    min-width: 0;
+    width: 100%;
 
     .add-request-link {
       color: ${(props) => props.theme.textLink};

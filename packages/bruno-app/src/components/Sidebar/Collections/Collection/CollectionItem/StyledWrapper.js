@@ -2,6 +2,9 @@ import styled from 'styled-components';
 
 const Wrapper = styled.div`
   position: relative;
+  min-width: 0;
+  width: 100%;
+
   .menu-icon {
     color: ${(props) => props.theme.sidebar.dropdownIcon.color};
     visibility: hidden;
@@ -25,6 +28,8 @@ const Wrapper = styled.div`
     cursor: pointer;
     user-select: none;
     position: relative;
+    min-width: 0;
+    width: 100%;
 
     /* Default: menu icon hidden, shown on hover/focus states (see consolidated rule below) */
     .collection-item-menu-icon {
@@ -97,6 +102,7 @@ const Wrapper = styled.div`
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
+      min-width: 0;
     }
 
     /* Single source of truth for hover/focus states: background and menu icon visibility */
@@ -163,6 +169,8 @@ const Wrapper = styled.div`
     height: 1.6rem;
     font-size: ${(props) => props.theme.font.size.sm};
     color: ${(props) => props.theme.sidebar.muted};
+    min-width: 0;
+    width: 100%;
 
     .add-request-link {
       color: ${(props) => props.theme.textLink};

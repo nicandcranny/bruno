@@ -3,6 +3,7 @@ import styled from 'styled-components';
 const Wrapper = styled.div`
   color: ${(props) => props.theme.sidebar.color};
   max-height: 100%;
+  min-width: 0;
 
   aside {
     background-color: ${(props) => props.theme.sidebar.bg};
@@ -11,18 +12,23 @@ const Wrapper = styled.div`
     .sidebar-sections-container {
       display: flex;
       flex-direction: column;
+      min-width: 0;
     }
 
     .sidebar-sections {
       min-height: 0;
+      min-width: 0;
       display: flex;
       flex-direction: column;
       height: 100%;
+      width: 100%;
     }
     .sidebar-activity-layout {
       display: flex;
       min-height: 0;
+      min-width: 0;
       height: 100%;
+      width: 100%;
     }
 
     .sidebar-activity-bar {
@@ -78,6 +84,7 @@ const Wrapper = styled.div`
       min-width: 0;
       min-height: 0;
       overflow: hidden;
+      width: 100%;
     }
   }
 
