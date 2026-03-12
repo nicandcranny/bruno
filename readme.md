@@ -215,6 +215,7 @@ Improve request search on the sidebar to allow search for collection names
 ## TODOs
 
 1. Favorite feature for collections (stay on top)
-2. Add Git push on workspace: Let's build vscode-like per file diffs feature where i see the diffs, stage file, unstage file, commit, push, and pull
-3. Allow search folder on sidebar search
-4. Instant action (like cmd+shift+p)
+2. Allow search folder on sidebar search
+3. Instant action (like cmd+shift+p) - for git, etc. 
+4. Save button on environment should be disabled when there are no changes - also environment should have the dot on the tab when there are unsaved changes
+5. Improve Git diff UI
