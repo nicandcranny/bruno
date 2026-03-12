@@ -1,11 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { IconArrowDown, IconArrowUp, IconRefresh, IconGitCommit, IconMinus, IconPlus } from '@tabler/icons';
+import { IconRefresh, IconGitCommit, IconMinus, IconPlus } from '@tabler/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { addTab } from 'providers/ReduxStore/slices/tabs';
 import {
   commitGitChanges,
-  pullGitChanges,
-  pushGitChanges,
   refreshCollectionGitStatus,
   stageGitFiles,
   syncGitChanges,
@@ -39,7 +37,7 @@ const getChangeStatus = (change) => {
   return primaryStatus || change.fileIndex || change.working_dir || 'M';
 };
 
-const ChangeGroup = ({ title, changes, onToggleStage, onOpenDiff, staged }) => {
+const ChangeGroup = ({ title, changes, onToggleStage, onOpenDiff, staged, onToggleAll, loading, showToggleAll = true }) => {
   if (!changes?.length) {
     return null;
   }
@@ -47,8 +45,30 @@ const ChangeGroup = ({ title, changes, onToggleStage, onOpenDiff, staged }) => {
   return (
     <div className="change-group">
       <div className="change-group-header">
-        <span>{title}</span>
-        <span>{changes.length}</span>
+        <div className="change-group-title">
+          <span>{title}</span>
+          <span className="change-group-count">{changes.length}</span>
+        </div>
+        {showToggleAll ? (
+          <div className="change-group-actions">
+            <button
+              type="button"
+              className="change-icon-button visible"
+              onClick={() => onToggleAll(changes)}
+              disabled={loading}
+              aria-label={staged ? 'Unstage all changes' : 'Stage all changes'}
+              title={staged ? 'Unstage All Changes' : 'Stage All Changes'}
+            >
+              {loading ? (
+                <IconRefresh size={14} strokeWidth={1.7} className="is-spinning" />
+              ) : staged ? (
+                <IconMinus size={14} strokeWidth={1.7} />
+              ) : (
+                <IconPlus size={14} strokeWidth={1.7} />
+              )}
+            </button>
+          </div>
+        ) : null}
       </div>
       <div className="change-list">
         {changes.map((change) => (
@@ -69,7 +89,13 @@ const ChangeGroup = ({ title, changes, onToggleStage, onOpenDiff, staged }) => {
                 aria-label={`${staged ? 'Unstage' : 'Stage'} ${change.path}`}
                 title={staged ? 'Unstage' : 'Stage'}
               >
-                {staged ? <IconMinus size={14} strokeWidth={1.7} /> : <IconPlus size={14} strokeWidth={1.7} />}
+                {loading ? (
+                  <IconRefresh size={14} strokeWidth={1.7} className="is-spinning" />
+                ) : staged ? (
+                  <IconMinus size={14} strokeWidth={1.7} />
+                ) : (
+                  <IconPlus size={14} strokeWidth={1.7} />
+                )}
               </button>
               <span className={`change-status status-${getChangeStatus(change).toLowerCase()}`}>{getChangeStatus(change)}</span>
             </div>
@@ -106,6 +132,7 @@ const SourceControlSection = () => {
   const hasSyncWork = (gitState?.ahead || 0) > 0 || (gitState?.behind || 0) > 0;
   const isBusy = Boolean(gitState?.loading);
   const primaryAction = hasStagedChanges ? 'commit' : hasSyncWork ? 'sync' : null;
+  const currentOperation = gitState?.operation;
 
   const summaryText = useMemo(() => {
     if (!gitState?.isRepository) {
@@ -135,6 +162,15 @@ const SourceControlSection = () => {
       : stageGitFiles;
 
     dispatch(action(activeTab.collectionUid, [change.path]));
+  };
+
+  const handleToggleAll = (changes, stagedGroup) => {
+    if (!activeTab?.collectionUid || !changes?.length) {
+      return;
+    }
+
+    const action = stagedGroup ? unstageGitFiles : stageGitFiles;
+    dispatch(action(activeTab.collectionUid, changes.map((change) => change.path)));
   };
 
   const handleOpenDiff = (change) => {
@@ -206,29 +242,13 @@ const SourceControlSection = () => {
         <button
           type="button"
           className="source-control-button"
-          onClick={() => dispatch(refreshCollectionGitStatus(activeCollection.uid))}
+          onClick={() => dispatch(refreshCollectionGitStatus(activeTab.collectionUid))}
         >
-          <IconRefresh size={14} strokeWidth={1.5} />
+          <IconRefresh size={14} strokeWidth={1.5} className={isBusy ? 'is-spinning' : ''} />
         </button>
       </div>
 
-      <div className="source-control-body">
-        {gitState?.changedFiles?.tooManyFiles ? (
-          <div className="source-control-empty">Too many changed files to render in the sidebar.</div>
-        ) : (
-          <>
-            <ChangeGroup title="Staged Changes" changes={staged} staged onToggleStage={handleToggleStage} onOpenDiff={handleOpenDiff} />
-            <ChangeGroup title="Changes" changes={unstaged} staged={false} onToggleStage={handleToggleStage} onOpenDiff={handleOpenDiff} />
-            <ChangeGroup title="Merge Changes" changes={conflicted} staged={false} onToggleStage={handleToggleStage} onOpenDiff={handleOpenDiff} />
-
-            {!staged.length && !unstaged.length && !conflicted.length ? (
-              <div className="source-control-empty">No local changes in this repository.</div>
-            ) : null}
-          </>
-        )}
-      </div>
-
-      <div className="source-control-footer">
+      <div className="source-control-composer">
         <textarea
           className="commit-input"
           placeholder="Message (press Commit to create a commit)"
@@ -241,24 +261,6 @@ const SourceControlSection = () => {
           <button
             type="button"
             className="source-control-button"
-            disabled={isBusy || !gitState?.hasRemote}
-            onClick={() => dispatch(pullGitChanges(activeCollection.uid))}
-          >
-            <IconArrowDown size={14} strokeWidth={1.5} />
-            Pull
-          </button>
-          <button
-            type="button"
-            className="source-control-button"
-            disabled={isBusy || !gitState?.hasRemote}
-            onClick={() => dispatch(pushGitChanges(activeCollection.uid))}
-          >
-            <IconArrowUp size={14} strokeWidth={1.5} />
-            Push
-          </button>
-          <button
-            type="button"
-            className="source-control-button primary"
             disabled={
               isBusy
               || !primaryAction
@@ -266,10 +268,55 @@ const SourceControlSection = () => {
             }
             onClick={handlePrimaryAction}
           >
-            {primaryAction === 'commit' ? <IconGitCommit size={14} strokeWidth={1.5} /> : <IconRefresh size={14} strokeWidth={1.5} />}
+            {primaryAction === 'commit' ? (
+              <IconGitCommit size={14} strokeWidth={1.5} className={currentOperation === 'commit' ? 'is-spinning' : ''} />
+            ) : (
+              <IconRefresh size={14} strokeWidth={1.5} className={currentOperation === 'sync' ? 'is-spinning' : ''} />
+            )}
             {primaryAction === 'commit' ? 'Commit' : primaryAction === 'sync' ? 'Sync' : 'Commit'}
           </button>
         </div>
+      </div>
+
+      <div className="source-control-body">
+        {gitState?.changedFiles?.tooManyFiles ? (
+          <div className="source-control-empty">Too many changed files to render in the sidebar.</div>
+        ) : (
+          <>
+            <ChangeGroup
+              title="Staged Changes"
+              changes={staged}
+              staged
+              loading={isBusy}
+              onToggleAll={(changes) => handleToggleAll(changes, true)}
+              onToggleStage={handleToggleStage}
+              onOpenDiff={handleOpenDiff}
+            />
+            <ChangeGroup
+              title="Changes"
+              changes={unstaged}
+              staged={false}
+              loading={isBusy}
+              onToggleAll={(changes) => handleToggleAll(changes, false)}
+              onToggleStage={handleToggleStage}
+              onOpenDiff={handleOpenDiff}
+            />
+            <ChangeGroup
+              title="Merge Changes"
+              changes={conflicted}
+              staged={false}
+              loading={isBusy}
+              onToggleAll={() => {}}
+              showToggleAll={false}
+              onToggleStage={handleToggleStage}
+              onOpenDiff={handleOpenDiff}
+            />
+
+            {!staged.length && !unstaged.length && !conflicted.length ? (
+              <div className="source-control-empty">No local changes in this repository.</div>
+            ) : null}
+          </>
+        )}
       </div>
     </StyledWrapper>
   );

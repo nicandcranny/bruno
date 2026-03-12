@@ -37,6 +37,14 @@ const StyledWrapper = styled.div`
     padding: 8px 8px 0;
   }
 
+  .source-control-composer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-bottom: 1px solid ${(props) => props.theme.sidebar.collection.item.hoverBg};
+  }
+
   .source-control-empty {
     padding: 18px 8px;
     color: ${(props) => props.theme.sidebar.muted};
@@ -58,6 +66,32 @@ const StyledWrapper = styled.div`
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
+  }
+
+  .change-group-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .change-group-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: ${(props) => props.theme.sidebar.collection.item.hoverBg};
+    color: ${(props) => props.theme.sidebar.color};
+    font-size: 11px;
+  }
+
+  .change-group-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
 
   .change-list {
@@ -143,6 +177,10 @@ const StyledWrapper = styled.div`
     transition: opacity 0.12s ease, background-color 0.12s ease, color 0.12s ease;
   }
 
+  .change-icon-button.visible {
+    opacity: 1;
+  }
+
   .change-row:hover .change-icon-button,
   .change-row:focus-within .change-icon-button {
     opacity: 1;
@@ -186,14 +224,6 @@ const StyledWrapper = styled.div`
     color: #c678dd;
   }
 
-  .source-control-footer {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 12px;
-    border-top: 1px solid ${(props) => props.theme.sidebar.collection.item.hoverBg};
-  }
-
   .commit-input {
     width: 100%;
     min-height: 84px;
@@ -212,7 +242,7 @@ const StyledWrapper = styled.div`
 
   .source-control-actions {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     gap: 8px;
   }
 
@@ -232,13 +262,22 @@ const StyledWrapper = styled.div`
     cursor: pointer;
   }
 
-  .source-control-button.primary {
-    background: ${(props) => props.theme.sidebar.collection.item.hoverBg};
-  }
-
   .source-control-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  .is-spinning {
+    animation: scm-spin 1s linear infinite;
+  }
+
+  @keyframes scm-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 `;
 
