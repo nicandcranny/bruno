@@ -1,16 +1,19 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { IconFileAlert } from '@tabler/icons';
+import { useDispatch, useSelector } from 'react-redux';
+import { IconCheck, IconFileAlert } from '@tabler/icons';
 
 import EnvironmentDetails from 'components/WorkspaceHome/WorkspaceEnvironments/EnvironmentList/EnvironmentDetails';
+import { selectGlobalEnvironment } from 'providers/ReduxStore/slices/global-environments';
 
 const GlobalEnvironmentSettings = ({ environmentUid = null }) => {
   const [, setIsModified] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const searchInputRef = useRef(null);
+  const dispatch = useDispatch();
 
   const globalEnvironments = useSelector((state) => state.globalEnvironments.globalEnvironments);
+  const activeGlobalEnvironmentUid = useSelector((state) => state.globalEnvironments.activeGlobalEnvironmentUid);
 
   const environment = useMemo(() => {
     if (environmentUid) {
@@ -29,6 +32,24 @@ const GlobalEnvironmentSettings = ({ environmentUid = null }) => {
     );
   }
 
+  const isActive = environment.uid === activeGlobalEnvironmentUid;
+
+  const activateButton = (
+    <button
+      type="button"
+      className={isActive ? 'active-indicator' : ''}
+      title={isActive ? 'Active environment' : 'Set active environment'}
+      onClick={() => {
+        if (!isActive) {
+          dispatch(selectGlobalEnvironment({ environmentUid: environment.uid }));
+        }
+      }}
+      disabled={isActive}
+    >
+      <IconCheck size={15} strokeWidth={2} />
+    </button>
+  );
+
   return (
     <EnvironmentDetails
       environment={environment}
@@ -41,6 +62,7 @@ const GlobalEnvironmentSettings = ({ environmentUid = null }) => {
       setIsSearchExpanded={setIsSearchExpanded}
       debouncedSearchQuery={searchQuery}
       searchInputRef={searchInputRef}
+      headerActions={activateButton}
     />
   );
 };

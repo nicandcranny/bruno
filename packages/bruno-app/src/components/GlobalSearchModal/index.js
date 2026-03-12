@@ -11,11 +11,10 @@ import {
   IconWorld
 } from '@tabler/icons';
 import { flattenItems, isItemARequest, isItemAFolder, findParentItemInCollection } from 'utils/collections';
-import { addTab, focusTab } from 'providers/ReduxStore/slices/tabs';
+import { addTab, focusTab, updateTab } from 'providers/ReduxStore/slices/tabs';
 import { toggleCollectionItem, toggleCollection } from 'providers/ReduxStore/slices/collections';
 import { mountCollection, selectEnvironment } from 'providers/ReduxStore/slices/collections/actions';
 import { getDefaultRequestPaneTab } from 'utils/collections';
-import { selectGlobalEnvironment } from 'providers/ReduxStore/slices/global-environments';
 import { openSidebarSection } from 'utils/sidebar';
 import {
   parseSearchQuery,
@@ -48,9 +47,11 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
 
   const collections = useSelector((state) => state.collections.collections);
   const globalEnvironments = useSelector((state) => state.globalEnvironments.globalEnvironments);
+  const { workspaces, activeWorkspaceUid } = useSelector((state) => state.workspaces);
   const tabs = useSelector((state) => state.tabs.tabs);
   const activeTabUid = useSelector((state) => state.tabs.activeTabUid);
   const activeTab = tabs.find((tab) => tab.uid === activeTabUid);
+  const activeWorkspace = workspaces.find((workspace) => workspace.uid === activeWorkspaceUid);
 
   const createCollectionResults = useCallback(() => {
     return collections.map((collection) => ({
@@ -290,11 +291,39 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
     }
 
     if (result.type === SEARCH_TYPES.GLOBAL_ENVIRONMENT) {
-      if (result.environmentUid) {
-        dispatch(selectGlobalEnvironment({ environmentUid: result.environmentUid }));
+      const scratchCollectionUid = activeWorkspace?.scratchCollectionUid;
+      const globalEnvironmentTabUid = scratchCollectionUid
+        ? `${scratchCollectionUid}-global-environment-settings`
+        : null;
+
+      if (result.environmentUid && globalEnvironmentTabUid && scratchCollectionUid) {
+        const existingTab = tabs.find((tab) => tab.uid === globalEnvironmentTabUid);
+        const environment = globalEnvironments.find((item) => item.uid === result.environmentUid);
+
+        if (existingTab) {
+          dispatch(updateTab({
+            uid: globalEnvironmentTabUid,
+            environmentUid: result.environmentUid,
+            tabName: environment?.name
+          }));
+          dispatch(focusTab({ uid: globalEnvironmentTabUid }));
+        } else {
+          dispatch(addTab({
+            uid: globalEnvironmentTabUid,
+            collectionUid: scratchCollectionUid,
+            type: 'global-environment-settings',
+            environmentUid: result.environmentUid,
+            tabName: environment?.name
+          }));
+        }
       }
 
-      openSidebarSection('global-variables');
+      if (result.environmentUid) {
+        openSidebarSection('global-variables', {
+          focusEnvironmentUid: result.environmentUid
+        });
+      }
+
       onClose();
       return;
     }

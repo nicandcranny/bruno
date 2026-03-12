@@ -173,6 +173,10 @@ const StyledWrapper = styled.div`
         &:last-child:hover {
           color: ${(props) => props.theme.colors.text.danger};
         }
+
+        &.active-indicator {
+          color: ${(props) => props.theme.colors.accent};
+        }
       }
     }
   }

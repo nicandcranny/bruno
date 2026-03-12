@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { IconCheck, IconDownload, IconPlus, IconSearch, IconUpload, IconWorld } from '@tabler/icons';
 
@@ -23,6 +23,7 @@ const GlobalVariablesSection = ({ collapsible = true }) => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const environmentItemRefs = useRef({});
 
   const activeWorkspace = workspaces.find((workspace) => workspace.uid === activeWorkspaceUid);
 
@@ -71,6 +72,29 @@ const GlobalVariablesSection = ({ collapsible = true }) => {
 
   const activeGlobalEnvironmentTab = tabs.find((tab) => tab.uid === activeTabUid && tab.type === 'global-environment-settings');
   const activeSidebarEnvironmentUid = activeGlobalEnvironmentTab?.environmentUid;
+
+  useEffect(() => {
+    const handleSidebarSectionOpen = (event) => {
+      if (event?.detail?.sectionId !== 'global-variables') {
+        return;
+      }
+
+      const environmentUid = event?.detail?.focusEnvironmentUid;
+      if (!environmentUid) {
+        return;
+      }
+
+      const element = environmentItemRefs.current[environmentUid];
+      if (element) {
+        element.scrollIntoView({
+          block: 'nearest'
+        });
+      }
+    };
+
+    window.addEventListener('sidebar-section-open', handleSidebarSectionOpen);
+    return () => window.removeEventListener('sidebar-section-open', handleSidebarSectionOpen);
+  }, []);
 
   const sectionActions = (
     <>
@@ -147,6 +171,13 @@ const GlobalVariablesSection = ({ collapsible = true }) => {
               <button
                 key={environment.uid}
                 type="button"
+                ref={(element) => {
+                  if (element) {
+                    environmentItemRefs.current[environment.uid] = element;
+                  } else {
+                    delete environmentItemRefs.current[environment.uid];
+                  }
+                }}
                 className={`global-variable-item ${environment.uid === activeSidebarEnvironmentUid ? 'active' : ''}`}
                 onClick={() => openEnvironmentTable(environment)}
               >
