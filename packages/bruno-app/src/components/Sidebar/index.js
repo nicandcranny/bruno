@@ -35,7 +35,7 @@ const SIDEBAR_SECTIONS = [
   },
   {
     id: 'global-variables',
-    title: 'Global Variables',
+    title: 'Global Environments',
     icon: IconWorld,
     getProps: () => ({
       collapsible: false

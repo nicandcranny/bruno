@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { IconDownload, IconPlus, IconSearch, IconUpload, IconWorld } from '@tabler/icons';
+import { IconCheck, IconDownload, IconPlus, IconSearch, IconUpload, IconWorld } from '@tabler/icons';
 
 import { addTab, focusTab, updateTab } from 'providers/ReduxStore/slices/tabs';
+import { selectGlobalEnvironment } from 'providers/ReduxStore/slices/global-environments';
 import ActionIcon from 'ui/ActionIcon';
 import SidebarSection from 'components/Sidebar/SidebarSection';
 import CreateGlobalEnvironment from 'components/WorkspaceHome/WorkspaceEnvironments/CreateEnvironment';
@@ -12,7 +13,7 @@ import StyledWrapper from './StyledWrapper';
 
 const GlobalVariablesSection = ({ collapsible = true }) => {
   const dispatch = useDispatch();
-  const { globalEnvironments } = useSelector((state) => state.globalEnvironments);
+  const { globalEnvironments, activeGlobalEnvironmentUid } = useSelector((state) => state.globalEnvironments);
   const { workspaces, activeWorkspaceUid } = useSelector((state) => state.workspaces);
   const tabs = useSelector((state) => state.tabs.tabs);
   const activeTabUid = useSelector((state) => state.tabs.activeTabUid);
@@ -33,6 +34,11 @@ const GlobalVariablesSection = ({ collapsible = true }) => {
 
     return (globalEnvironments || []).filter((environment) => environment?.name?.toLowerCase().includes(query));
   }, [globalEnvironments, searchValue]);
+
+  const handleActivateEnvironment = (event, environmentUid) => {
+    event.stopPropagation();
+    dispatch(selectGlobalEnvironment({ environmentUid }));
+  };
 
   const openEnvironmentTable = (environment) => {
     const scratchCollectionUid = activeWorkspace?.scratchCollectionUid;
@@ -79,13 +85,13 @@ const GlobalVariablesSection = ({ collapsible = true }) => {
       >
         <IconSearch size={14} stroke={1.5} aria-hidden="true" />
       </ActionIcon>
-      <ActionIcon onClick={() => setCreateModalOpen(true)} label="Create global variable">
+      <ActionIcon onClick={() => setCreateModalOpen(true)} label="Create global environment">
         <IconPlus size={14} stroke={1.5} aria-hidden="true" />
       </ActionIcon>
-      <ActionIcon onClick={() => setImportModalOpen(true)} label="Import global variable">
+      <ActionIcon onClick={() => setImportModalOpen(true)} label="Import global environment">
         <IconDownload size={14} stroke={1.5} aria-hidden="true" />
       </ActionIcon>
-      <ActionIcon onClick={() => setExportModalOpen(true)} label="Export global variable">
+      <ActionIcon onClick={() => setExportModalOpen(true)} label="Export global environment">
         <IconUpload size={14} stroke={1.5} aria-hidden="true" />
       </ActionIcon>
     </>
@@ -114,7 +120,7 @@ const GlobalVariablesSection = ({ collapsible = true }) => {
 
       <SidebarSection
         id="global-variables"
-        title="Global Variables"
+        title="Global Environments"
         icon={IconWorld}
         actions={sectionActions}
         collapsible={collapsible}
@@ -125,7 +131,7 @@ const GlobalVariablesSection = ({ collapsible = true }) => {
               <input
                 type="text"
                 className="textbox global-variables-search-input"
-                placeholder="Search global variables..."
+                placeholder="Search global environments..."
                 value={searchValue}
                 onChange={(event) => setSearchValue(event.target.value)}
                 autoComplete="off"
@@ -145,12 +151,28 @@ const GlobalVariablesSection = ({ collapsible = true }) => {
                 onClick={() => openEnvironmentTable(environment)}
               >
                 <span className="global-variable-name">{environment.name}</span>
+                <span className="global-variable-actions">
+                  {environment.uid === activeGlobalEnvironmentUid ? (
+                    <span className="global-variable-check active" title="Active environment">
+                      <IconCheck size={16} strokeWidth={2} />
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="global-variable-check"
+                      title="Set active environment"
+                      onClick={(event) => handleActivateEnvironment(event, environment.uid)}
+                    >
+                      <IconCheck size={16} strokeWidth={2} />
+                    </button>
+                  )}
+                </span>
               </button>
             ))}
 
             {!filteredEnvironments.length && (
               <div className="global-variables-empty">
-                {globalEnvironments?.length ? 'No global variables found' : 'No global variables yet'}
+                {globalEnvironments?.length ? 'No global environments found' : 'No global environments yet'}
               </div>
             )}
           </div>
