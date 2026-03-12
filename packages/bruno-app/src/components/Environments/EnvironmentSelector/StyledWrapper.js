@@ -2,6 +2,9 @@ import styled from 'styled-components';
 
 const Wrapper = styled.div`
   .current-environment {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     border-radius: ${(props) => props.theme.border.radius.base};
     padding: 0.25rem 0.3rem 0.25rem 0.5rem;
     user-select: none;
@@ -10,6 +13,7 @@ const Wrapper = styled.div`
     line-height: 1rem;
     transition: all 0.15s ease;
     height: 24px;
+    min-width: 14rem;
 
     &:hover {
       border-color: ${(props) => props.theme.app.collection.toolbar.environmentSelector.hoverBorder};
@@ -17,7 +21,8 @@ const Wrapper = styled.div`
     }
 
     .caret {
-      margin-left: 0.25rem;
+      margin-left: auto;
+      flex-shrink: 0;
       color: ${(props) => props.theme.app.collection.toolbar.environmentSelector.caret};
       fill: ${(props) => props.theme.app.collection.toolbar.environmentSelector.caret};
       align-self: center;
@@ -31,6 +36,9 @@ const Wrapper = styled.div`
     .env-text {
       color: ${(props) => props.theme.app.collection.toolbar.environmentSelector.text};
       display: block;
+      flex: 1;
+      min-width: 0;
+      max-width: 100%;
     }
 
     .env-separator {
@@ -40,6 +48,8 @@ const Wrapper = styled.div`
     .env-text-inactive {
       color: ${(props) => props.theme.colors.text.muted};
       font-size: ${(props) => props.theme.font.size.sm};
+      flex: 1;
+      min-width: 0;
     }
 
     &.no-environments {

@@ -88,7 +88,7 @@ const EnvironmentBadge = ({ environment, icon: Icon }) => {
         delayShow={1000}
         hidden={environment.name?.length < 7}
       >
-        <span className="env-text max-w-24 truncate overflow-hidden" style={colorStyle}>
+        <span className="env-text truncate overflow-hidden" style={colorStyle}>
           {environment.name}
         </span>
       </ToolHint>
@@ -107,10 +107,10 @@ const DropdownTrigger = forwardRef(({ collectionEnv, globalEnv }, ref) => {
     return (
       <div
         ref={ref}
-        className="current-environment flex align-center justify-center cursor-pointer bg-transparent no-environments"
+        className="current-environment flex align-center justify-between cursor-pointer bg-transparent no-environments"
         data-testid="environment-selector-trigger"
       >
-        <span className="env-text-inactive max-w-36 truncate no-wrap">No Environment</span>
+        <span className="env-text-inactive truncate no-wrap">No Environment</span>
         <IconCaretDown className="caret flex items-center justify-center" size={12} strokeWidth={2} />
       </div>
     );
@@ -121,11 +121,11 @@ const DropdownTrigger = forwardRef(({ collectionEnv, globalEnv }, ref) => {
     return (
       <div
         ref={ref}
-        className="current-environment flex align-center justify-center cursor-pointer bg-transparent"
+        className="current-environment flex align-center justify-start cursor-pointer bg-transparent"
         style={{ padding: 0 }}
         data-testid="environment-selector-trigger"
       >
-        <div className="flex items-center" style={getEnvBadgeStyle(collectionEnv, 'left', false)}>
+        <div className="flex items-center w-full min-w-0" style={getEnvBadgeStyle(collectionEnv, 'left', false)}>
           <EnvironmentBadge environment={collectionEnv} icon={IconDatabase} />
           <IconCaretDown className="caret flex items-center justify-center" size={12} strokeWidth={2} />
         </div>
@@ -138,11 +138,11 @@ const DropdownTrigger = forwardRef(({ collectionEnv, globalEnv }, ref) => {
     return (
       <div
         ref={ref}
-        className="current-environment flex align-center justify-center cursor-pointer bg-transparent"
+        className="current-environment flex align-center justify-start cursor-pointer bg-transparent"
         style={{ padding: 0 }}
         data-testid="environment-selector-trigger"
       >
-        <div className="flex items-center" style={getEnvBadgeStyle(globalEnv, 'right', false)}>
+        <div className="flex items-center w-full min-w-0" style={getEnvBadgeStyle(globalEnv, 'right', false)}>
           <EnvironmentBadge environment={globalEnv} icon={IconWorld} />
           <IconCaretDown className="caret flex items-center justify-center" size={12} strokeWidth={2} />
         </div>
@@ -154,12 +154,12 @@ const DropdownTrigger = forwardRef(({ collectionEnv, globalEnv }, ref) => {
   return (
     <div
       ref={ref}
-      className="current-environment flex align-center justify-center cursor-pointer bg-transparent"
+      className="current-environment flex align-center justify-start cursor-pointer bg-transparent"
       style={{ padding: 0 }}
       data-testid="environment-selector-trigger"
     >
       {/* Collection Environment Section */}
-      <div className="flex items-center" style={getEnvBadgeStyle(collectionEnv, 'left', true)}>
+      <div className="flex items-center min-w-0" style={getEnvBadgeStyle(collectionEnv, 'left', true)}>
         <EnvironmentBadge environment={collectionEnv} icon={IconDatabase} />
       </div>
 
@@ -167,7 +167,7 @@ const DropdownTrigger = forwardRef(({ collectionEnv, globalEnv }, ref) => {
       <div className="env-separator" style={{ width: '1px', alignSelf: 'stretch' }} />
 
       {/* Global Environment Section + Caret */}
-      <div className="flex items-center" style={getEnvBadgeStyle(globalEnv, 'right', true)}>
+      <div className="flex items-center min-w-0" style={getEnvBadgeStyle(globalEnv, 'right', true)}>
         <EnvironmentBadge environment={globalEnv} icon={IconWorld} />
         <IconCaretDown className="caret flex items-center justify-center" size={12} strokeWidth={2} />
       </div>

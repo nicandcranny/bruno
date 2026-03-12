@@ -215,6 +215,5 @@ Improve request search on the sidebar to allow search for collection names
 ## TODOs
 
 1. Favorite feature for collections (stay on top)
-2. Fix global search on go to env variable
-3. Add Git push on workspace: Let's build vscode-like per file diffs feature where i see the diffs, stage file, unstage file, commit, push, and pull
-4. Allow search folder on sidebar search
+2. Add Git push on workspace: Let's build vscode-like per file diffs feature where i see the diffs, stage file, unstage file, commit, push, and pull
+3. Allow search folder on sidebar search
