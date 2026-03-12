@@ -38,6 +38,7 @@ import EnvironmentSettings from 'components/Environments/EnvironmentSettings';
 import GlobalEnvironmentSettings from 'components/Environments/GlobalEnvironmentSettings';
 import OpenAPISyncTab from 'components/OpenAPISyncTab';
 import OpenAPISpecTab from 'components/OpenAPISpecTab';
+import GitDiffTab from 'components/Git/GitDiffTab';
 
 const MIN_LEFT_PANE_WIDTH = 300;
 const MIN_RIGHT_PANE_WIDTH = 490;
@@ -253,6 +254,10 @@ const RequestTabPanel = () => {
 
   if (focusedTab.type === 'openapi-spec') {
     return <OpenAPISpecTab collection={collection} />;
+  }
+
+  if (focusedTab.type === 'git-diff') {
+    return <GitDiffTab collection={collection} tab={focusedTab} />;
   }
 
   if (!item || !item.uid) {

@@ -8,7 +8,8 @@ import { updateLeftSidebarWidth, updateIsDragging } from 'providers/ReduxStore/s
 import CollectionsSection from './Sections/CollectionsSection/index';
 import ApiSpecsSection from './Sections/ApiSpecsSection/index';
 import GlobalVariablesSection from './Sections/GlobalVariablesSection';
-import { IconBox, IconFileCode, IconWorld } from '@tabler/icons';
+import SourceControlSection from './Sections/SourceControlSection';
+import { IconBox, IconFileCode, IconGitBranch, IconWorld } from '@tabler/icons';
 
 const MIN_LEFT_SIDEBAR_WIDTH = 220;
 const MAX_LEFT_SIDEBAR_WIDTH = 600;
@@ -41,6 +42,15 @@ const SIDEBAR_SECTIONS = [
       collapsible: false
     }),
     component: GlobalVariablesSection
+  },
+  {
+    id: 'source-control',
+    title: 'Source Control',
+    icon: IconGitBranch,
+    getProps: () => ({
+      collapsible: false
+    }),
+    component: SourceControlSection
   }
 ];
 

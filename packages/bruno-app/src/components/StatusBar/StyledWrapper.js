@@ -37,6 +37,11 @@ const StyledWrapper = styled.div`
     outline: none;
   }
 
+  .status-bar-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   .console-button-content {
     display: flex;
     align-items: center;

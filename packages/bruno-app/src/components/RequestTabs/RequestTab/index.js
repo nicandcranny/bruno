@@ -137,6 +137,10 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
           }
           break;
 
+        case 'git-diff':
+          dispatch(closeTabs({ tabUids: [activeTabUid] }));
+          break;
+
         default:
           break;
       }
@@ -218,7 +222,8 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
     'workspaceOverview',
     'workspaceEnvironments',
     'openapi-sync',
-    'openapi-spec'
+    'openapi-spec',
+    'git-diff'
   ];
 
   const hasDraft = tab.type === 'collection-settings' && collection?.draft;
