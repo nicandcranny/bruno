@@ -21,7 +21,7 @@ import { parsePathParams, splitOnFirst } from 'utils/url';
 import { getSubdirectoriesFromRoot } from 'utils/common/platform';
 import toast from 'react-hot-toast';
 import mime from 'mime-types';
-import path from 'utils/common/path';
+import path, { normalizePath } from 'utils/common/path';
 import { getUniqueTagsFromItems } from 'utils/collections/index';
 import * as exampleReducers from './exampleReducers';
 
@@ -156,8 +156,12 @@ export const collectionsSlice = createSlice({
   initialState,
   reducers: {
     createCollection: (state, action) => {
-      const collectionUids = map(state.collections, (c) => c.uid);
       const collection = action.payload;
+      const normalizedCollectionPath = normalizePath(collection.pathname);
+      const hasExistingCollection = state.collections.some((existingCollection) =>
+        existingCollection.uid === collection.uid
+        || normalizePath(existingCollection.pathname) === normalizedCollectionPath
+      );
 
       collection.settingsSelectedTab = 'overview';
       collection.folderLevelSettingsSelectedTab = {};
@@ -186,7 +190,7 @@ export const collectionsSlice = createSlice({
 
       collapseAllItemsInCollection(collection);
       addDepth(collection.items);
-      if (!collectionUids.includes(collection.uid)) {
+      if (!hasExistingCollection) {
         state.collections.push(collection);
       }
     },

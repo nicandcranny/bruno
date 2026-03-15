@@ -1,5 +1,6 @@
 import React from 'react';
 import { SEARCH_TYPES, MATCH_TYPES, SEARCH_CONFIG, SEARCH_PREFIXES, SEARCH_SCOPES } from '../constants';
+import { normalizePath } from 'utils/common/path';
 
 export const normalizeQuery = (searchQuery) => {
   return searchQuery.trim().replace(/\/+/g, '/');
@@ -64,6 +65,43 @@ export const sortResults = (results) => {
 
     // Finally sort alphabetically
     return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+  });
+};
+
+const getResultIdentity = (result) => {
+  const collectionPath = normalizePath(result?.item?.pathname || result?.collectionPathname || result?.collection?.pathname || '');
+  const itemPath = normalizePath(result?.item?.pathname || result?.path || '');
+
+  switch (result?.type) {
+    case SEARCH_TYPES.DOCUMENTATION:
+      return SEARCH_TYPES.DOCUMENTATION;
+    case SEARCH_TYPES.COLLECTION:
+      return `${SEARCH_TYPES.COLLECTION}:${collectionPath || normalizePath(result?.path || '') || result?.name}`;
+    case SEARCH_TYPES.ENVIRONMENT:
+      return `${SEARCH_TYPES.ENVIRONMENT}:${collectionPath || result?.collectionUid || 'unknown'}:${result?.environmentUid || result?.item?.uid || result?.name}`;
+    case SEARCH_TYPES.GLOBAL_ENVIRONMENT:
+      return `${SEARCH_TYPES.GLOBAL_ENVIRONMENT}:${result?.environmentUid || result?.item?.uid || result?.name}`;
+    case SEARCH_TYPES.FOLDER:
+      return `${SEARCH_TYPES.FOLDER}:${collectionPath || result?.collectionUid || 'unknown'}:${itemPath || result?.item?.uid || result?.name}`;
+    case SEARCH_TYPES.REQUEST:
+      return `${SEARCH_TYPES.REQUEST}:${collectionPath || result?.collectionUid || 'unknown'}:${itemPath || result?.item?.uid || result?.name}`;
+    default:
+      return `${result?.type || 'unknown'}:${itemPath || result?.item?.uid || result?.path || result?.name || ''}`;
+  }
+};
+
+export const dedupeSearchResults = (results = []) => {
+  const seen = new Set();
+
+  return results.filter((result) => {
+    const identity = getResultIdentity(result);
+
+    if (seen.has(identity)) {
+      return false;
+    }
+
+    seen.add(identity);
+    return true;
   });
 };
 

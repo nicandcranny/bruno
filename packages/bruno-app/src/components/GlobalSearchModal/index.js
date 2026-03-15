@@ -21,6 +21,7 @@ import {
   isValidQuery,
   highlightText,
   sortResults,
+  dedupeSearchResults,
   getTypeLabel,
   getItemPath,
   searchGlobalEnvironments,
@@ -236,7 +237,7 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
     }
 
     const enablePathMatch = normalizedQuery.includes('/');
-    const sortedResults = sortResults(searchInCollections(searchTerms, enablePathMatch, scope));
+    const sortedResults = dedupeSearchResults(sortResults(searchInCollections(searchTerms, enablePathMatch, scope)));
 
     setResults(sortedResults);
     setSelectedIndex(0);

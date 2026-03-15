@@ -71,6 +71,7 @@ You can explore our [paid versions](https://www.usebruno.com/pricing) to see if 
 - [Authors](#authors)
 - [License 📄](#license-)
 - [Differences from Original Bruno](#differences-from-original-bruno)
+  - [All Section](#all-section)
   - [Global Search Improvement](#global-search-improvement)
   - [Activity Bar Menu](#activity-bar-menu)
   - [Improve Request Search](#improve-request-search)
@@ -191,6 +192,10 @@ Even if you are not able to make contributions via code, please don't hesitate t
 
 ## Differences from Original Bruno
 
+### All Section
+
+Add `All` group to the active tabs list to see all active tabs in one place.
+
 ### Global Search Improvement
 
 - Global search now supports global environment variables
@@ -219,4 +224,7 @@ Improve request search on the sidebar to allow search for collection names
 3. Instant action (like cmd+shift+p) - for git, etc. 
 4. Save button on environment should be disabled when there are no changes - also environment should have the dot on the tab when there are unsaved changes
 5. Interaction on global search should auto select and focus on the item
-6. API spec as first-class citizen
+6. API spec into tabs
+7. Focus button on the sidebar
+8. Fix configure button on global environments to directly go to the global env page
+9. Double entries in the global search

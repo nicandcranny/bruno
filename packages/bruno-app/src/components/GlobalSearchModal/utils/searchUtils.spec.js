@@ -1,6 +1,11 @@
 const { describe, it, expect } = require('@jest/globals');
 const { MATCH_TYPES, SEARCH_SCOPES, SEARCH_TYPES } = require('../constants');
-const { parseSearchQuery, searchCollectionEnvironments, searchGlobalEnvironments } = require('./searchUtils');
+const {
+  dedupeSearchResults,
+  parseSearchQuery,
+  searchCollectionEnvironments,
+  searchGlobalEnvironments
+} = require('./searchUtils');
 
 describe('global search query parsing', () => {
   it('recognizes supported prefixes and strips them from search terms', () => {
@@ -102,5 +107,62 @@ describe('global search environment results', () => {
       })
     ]);
     expect(searchGlobalEnvironments(environments, ['super-secret-token'])).toEqual([]);
+  });
+});
+
+describe('global search result deduplication', () => {
+  it('deduplicates collection results by collection identity', () => {
+    const duplicatedResults = [
+      {
+        type: SEARCH_TYPES.COLLECTION,
+        item: { uid: 'col-1', pathname: '/collections/account-service' },
+        name: 'Billing',
+        path: 'Billing',
+        matchType: MATCH_TYPES.COLLECTION,
+        collectionUid: 'col-1'
+      },
+      {
+        type: SEARCH_TYPES.COLLECTION,
+        item: { uid: 'col-1-copy', pathname: '/collections/account-service' },
+        name: 'Billing',
+        path: 'Billing',
+        matchType: MATCH_TYPES.COLLECTION,
+        collectionUid: 'col-1-copy'
+      }
+    ];
+
+    expect(dedupeSearchResults(duplicatedResults)).toEqual([duplicatedResults[0]]);
+  });
+
+  it('keeps the highest-priority match for duplicate request results after sorting', () => {
+    const duplicateRequestResults = [
+      {
+        type: SEARCH_TYPES.REQUEST,
+        item: { uid: 'req-1' },
+        name: 'Get invoices',
+        path: 'Billing/Get invoices',
+        matchType: MATCH_TYPES.PATH,
+        collectionUid: 'col-1'
+      },
+      {
+        type: SEARCH_TYPES.REQUEST,
+        item: { uid: 'req-1' },
+        name: 'Get invoices',
+        path: 'Billing/Get invoices',
+        matchType: MATCH_TYPES.REQUEST,
+        collectionUid: 'col-1'
+      }
+    ];
+
+    const dedupedResults = dedupeSearchResults(duplicateRequestResults.sort((a, b) => {
+      const order = {
+        [MATCH_TYPES.REQUEST]: 0,
+        [MATCH_TYPES.PATH]: 1
+      };
+
+      return order[a.matchType] - order[b.matchType];
+    }));
+
+    expect(dedupedResults).toEqual([expect.objectContaining({ matchType: MATCH_TYPES.REQUEST })]);
   });
 });
