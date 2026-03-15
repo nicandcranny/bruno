@@ -227,4 +227,3 @@ Improve request search on the sidebar to allow search for collection names
 6. API spec into tabs
 7. Focus button on the sidebar
 8. Fix configure button on global environments to directly go to the global env page
-9. Double entries in the global search

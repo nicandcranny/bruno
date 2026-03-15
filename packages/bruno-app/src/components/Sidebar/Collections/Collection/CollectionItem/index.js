@@ -35,7 +35,7 @@ import DeleteCollectionItem from './DeleteCollectionItem';
 import RunCollectionItem from './RunCollectionItem';
 import GenerateCodeItem from './GenerateCodeItem';
 import { isItemARequest, isItemAFolder } from 'utils/tabs';
-import { doesRequestMatchSearchText, doesFolderHaveItemsMatchSearchText } from 'utils/collections/search';
+import { doesRequestMatchSearchText, getFolderSearchState } from 'utils/collections/search';
 import { getDefaultRequestPaneTab } from 'utils/collections';
 import toast from 'react-hot-toast';
 import StyledWrapper from './StyledWrapper';
@@ -95,9 +95,14 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
   const [itemInfoModalOpen, setItemInfoModalOpen] = useState(false);
   const [examplesExpanded, setExamplesExpanded] = useState(false);
   const [isKeyboardFocused, setIsKeyboardFocused] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const hasSearchText = searchText && searchText?.trim()?.length;
-  const itemIsCollapsed = hasSearchText ? false : item.collapsed;
   const isFolder = isItemAFolder(item);
+  const searchState = hasSearchText && isFolder ? getFolderSearchState(item, searchText) : null;
+  const itemIsCollapsed = hasSearchText
+    ? (isFolder ? (searchState.isCollapsedInSearch ? !isSearchExpanded : false) : false)
+    : item.collapsed;
+  const childSearchText = hasSearchText && isFolder && searchState.showAllChildrenOnExpand && isSearchExpanded ? '' : searchText;
 
   // Check if request has examples (only for HTTP requests)
   const hasExamples = isItemARequest(item) && item.type === 'http-request' && item.examples && item.examples.length > 0;
@@ -118,6 +123,10 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
   useEffect(() => {
     dragPreview(getEmptyImage(), { captureDraggingState: true });
   }, []);
+
+  useEffect(() => {
+    setIsSearchExpanded(false);
+  }, [item.uid, searchText]);
 
   // Auto-scroll to show this item when its tab becomes active
   useEffect(() => {
@@ -311,6 +320,12 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
   const handleFolderCollapse = (e) => {
     e.stopPropagation();
     e.preventDefault();
+
+    if (hasSearchText && searchState?.showAllChildrenOnExpand) {
+      setIsSearchExpanded((prev) => !prev);
+      return;
+    }
+
     dispatch(
       toggleCollectionItem({
         itemUid: item.uid,
@@ -514,13 +529,13 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
     'is-sidebar-dragging': isSidebarDragging
   });
 
-  if (searchText && searchText.length) {
+  if (hasSearchText) {
     if (isItemARequest(item)) {
       if (!doesRequestMatchSearchText(item, searchText)) {
         return null;
       }
     } else {
-      if (!doesFolderHaveItemsMatchSearchText(item, searchText)) {
+      if (!searchState.shouldShow) {
         return null;
       }
     }
@@ -769,12 +784,12 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
         <div>
           {folderItems && folderItems.length
             ? folderItems.map((i) => {
-                return <CollectionItem key={i.uid} item={i} collectionUid={collectionUid} collectionPathname={collectionPathname} searchText={searchText} />;
+                return <CollectionItem key={i.uid} item={i} collectionUid={collectionUid} collectionPathname={collectionPathname} searchText={childSearchText} />;
               })
             : null}
           {requestItems && requestItems.length
             ? requestItems.map((i) => {
-                return <CollectionItem key={i.uid} item={i} collectionUid={collectionUid} collectionPathname={collectionPathname} searchText={searchText} />;
+                return <CollectionItem key={i.uid} item={i} collectionUid={collectionUid} collectionPathname={collectionPathname} searchText={childSearchText} />;
               })
             : null}
           {showEmptyFolderMessage ? (

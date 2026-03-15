@@ -1,29 +1,93 @@
-import { flattenItems, isItemARequest } from './index';
-import filter from 'lodash/filter';
-import find from 'lodash/find';
+import { isItemARequest, isItemAFolder } from './index';
+
+const normalizeSearchText = (searchText = '') => searchText.trim().toLowerCase();
+
+const doesItemNameMatchSearchText = (item, searchText = '') => {
+  const normalizedSearchText = normalizeSearchText(searchText);
+
+  if (!normalizedSearchText) {
+    return false;
+  }
+
+  return item?.name?.toLowerCase().includes(normalizedSearchText);
+};
+
+const getSearchableItems = (items = []) => items.filter((item) => !item?.isTransient);
+
+const getTreeSearchState = (item, searchText = '') => {
+  if (isItemARequest(item)) {
+    const isDirectMatch = doesItemNameMatchSearchText(item, searchText);
+
+    return {
+      hasMatchingRequestInSubtree: isDirectMatch,
+      isCollapsedInSearch: false,
+      isDirectMatch,
+      shouldShow: isDirectMatch,
+      showAllChildrenOnExpand: false
+    };
+  }
+
+  const isDirectMatch = doesItemNameMatchSearchText(item, searchText);
+  const childStates = getSearchableItems(item?.items).map((child) => getTreeSearchState(child, searchText));
+  const hasVisibleDescendant = childStates.some((childState) => childState.shouldShow);
+  const hasMatchingRequestInSubtree = childStates.some((childState) => childState.hasMatchingRequestInSubtree);
+  const showAllChildrenOnExpand = isDirectMatch && !hasMatchingRequestInSubtree;
+
+  return {
+    hasMatchingRequestInSubtree,
+    isCollapsedInSearch: showAllChildrenOnExpand,
+    isDirectMatch,
+    shouldShow: isDirectMatch || hasVisibleDescendant,
+    showAllChildrenOnExpand
+  };
+};
 
 export const doesRequestMatchSearchText = (request, searchText = '') => {
-  return request?.name?.toLowerCase().includes(searchText.toLowerCase());
+  return doesItemNameMatchSearchText(request, searchText);
 };
 
 export const doesCollectionMatchSearchText = (collection, searchText = '') => {
-  return collection?.name?.toLowerCase().includes(searchText.toLowerCase());
+  return doesItemNameMatchSearchText(collection, searchText);
+};
+
+export const doesFolderMatchSearchText = (folder, searchText = '') => {
+  return doesItemNameMatchSearchText(folder, searchText);
+};
+
+export const getFolderSearchState = (folder, searchText = '') => {
+  if (!isItemAFolder(folder)) {
+    return {
+      hasMatchingRequestInSubtree: false,
+      isCollapsedInSearch: false,
+      isDirectMatch: false,
+      shouldShow: false,
+      showAllChildrenOnExpand: false
+    };
+  }
+
+  return getTreeSearchState(folder, searchText);
 };
 
 export const doesFolderHaveItemsMatchSearchText = (item, searchText = '') => {
-  let flattenedItems = flattenItems(item.items);
-  let requestItems = filter(flattenedItems, (item) => isItemARequest(item) && !item.isTransient);
-
-  return find(requestItems, (request) => doesRequestMatchSearchText(request, searchText));
+  return getFolderSearchState(item, searchText).shouldShow;
 };
 
 export const doesCollectionHaveItemsMatchingSearchText = (collection, searchText = '') => {
-  if (doesCollectionMatchSearchText(collection, searchText)) {
-    return true;
-  }
+  return getCollectionSearchState(collection, searchText).shouldShow;
+};
 
-  let flattenedItems = flattenItems(collection.items);
-  let requestItems = filter(flattenedItems, (item) => isItemARequest(item) && !item.isTransient);
+export const getCollectionSearchState = (collection, searchText = '') => {
+  const isDirectMatch = doesCollectionMatchSearchText(collection, searchText);
+  const childStates = getSearchableItems(collection?.items).map((item) => getTreeSearchState(item, searchText));
+  const hasVisibleDescendant = childStates.some((childState) => childState.shouldShow);
+  const hasMatchingRequestInSubtree = childStates.some((childState) => childState.hasMatchingRequestInSubtree);
+  const showAllChildrenOnExpand = isDirectMatch && !hasMatchingRequestInSubtree;
 
-  return find(requestItems, (request) => doesRequestMatchSearchText(request, searchText));
+  return {
+    hasMatchingRequestInSubtree,
+    isCollapsedInSearch: showAllChildrenOnExpand,
+    isDirectMatch,
+    shouldShow: isDirectMatch || hasVisibleDescendant,
+    showAllChildrenOnExpand
+  };
 };

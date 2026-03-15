@@ -32,7 +32,7 @@ import NewRequest from 'components/Sidebar/NewRequest';
 import NewFolder from 'components/Sidebar/NewFolder';
 import CollectionItem from './CollectionItem';
 import RemoveCollection from './RemoveCollection';
-import { doesCollectionHaveItemsMatchingSearchText } from 'utils/collections/search';
+import { getCollectionSearchState } from 'utils/collections/search';
 import { isItemAFolder, isItemARequest, areItemsLoading } from 'utils/collections';
 import { isTabForItemActive } from 'src/selectors/tab';
 
@@ -67,6 +67,7 @@ const Collection = ({ collection, searchText }) => {
   const [dropType, setDropType] = useState(null);
   const [isKeyboardFocused, setIsKeyboardFocused] = useState(false);
   const [showEmptyState, setShowEmptyState] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const dispatch = useDispatch();
   const isLoading = collection.isLoading;
   const collectionRef = useRef(null);
@@ -111,7 +112,15 @@ const Collection = ({ collection, searchText }) => {
   };
 
   const hasSearchText = searchText && searchText?.trim()?.length;
-  const collectionIsCollapsed = hasSearchText ? false : collection.collapsed;
+  const searchState = hasSearchText ? getCollectionSearchState(collection, searchText) : null;
+  const collectionIsCollapsed = hasSearchText
+    ? (searchState.isCollapsedInSearch ? !isSearchExpanded : false)
+    : collection.collapsed;
+  const childSearchText = hasSearchText && searchState.showAllChildrenOnExpand && isSearchExpanded ? '' : searchText;
+
+  useEffect(() => {
+    setIsSearchExpanded(false);
+  }, [collection.uid, searchText]);
 
   const iconClassName = classnames({
     'rotate-90': !collectionIsCollapsed
@@ -153,6 +162,12 @@ const Collection = ({ collection, searchText }) => {
   const handleCollectionCollapse = (e) => {
     e.stopPropagation();
     e.preventDefault();
+
+    if (hasSearchText && searchState?.showAllChildrenOnExpand) {
+      setIsSearchExpanded((prev) => !prev);
+      return;
+    }
+
     ensureCollectionIsMounted();
     dispatch(toggleCollection(collection.uid));
   };
@@ -321,8 +336,8 @@ const Collection = ({ collection, searchText }) => {
     return () => clearTimeout(timer);
   }, [itemCount, isLoading, collection.mountStatus]);
 
-  if (searchText && searchText.length) {
-    if (!doesCollectionHaveItemsMatchingSearchText(collection, searchText)) {
+  if (hasSearchText) {
+    if (!searchState.shouldShow) {
       return null;
     }
   }
@@ -539,10 +554,10 @@ const Collection = ({ collection, searchText }) => {
         {!collectionIsCollapsed ? (
           <div>
             {folderItems?.map?.((i) => {
-              return <CollectionItem key={i.uid} item={i} collectionUid={collection.uid} collectionPathname={collection.pathname} searchText={searchText} />;
+              return <CollectionItem key={i.uid} item={i} collectionUid={collection.uid} collectionPathname={collection.pathname} searchText={childSearchText} />;
             })}
             {requestItems?.map?.((i) => {
-              return <CollectionItem key={i.uid} item={i} collectionUid={collection.uid} collectionPathname={collection.pathname} searchText={searchText} />;
+              return <CollectionItem key={i.uid} item={i} collectionUid={collection.uid} collectionPathname={collection.pathname} searchText={childSearchText} />;
             })}
             {showEmptyCollectionMessage ? (
               <div className="empty-collection-message">
