@@ -19,6 +19,10 @@ function buildState(overrides = {}) {
       activeTabUid: null,
       tabs: []
     },
+    requestTabView: {
+      mode: 'all',
+      collectionUid: null
+    },
     workspaces: {
       activeWorkspaceUid: 'workspace-b',
       workspaces: [wsA, wsB]
@@ -52,6 +56,24 @@ describe('getTabToFocusForCurrentWorkspace', () => {
       }
     });
     expect(getTabToFocusForCurrentWorkspace(state)).toBeNull();
+  });
+
+  it('forces focus back to home tabs when home mode is active', () => {
+    const state = buildState({
+      requestTabView: {
+        mode: 'home',
+        collectionUid: null
+      },
+      tabs: {
+        activeTabUid: 'req-b',
+        tabs: [
+          { uid: 'req-b', collectionUid: 'col-b' },
+          { uid: 'scratch-b-overview', collectionUid: 'scratch-b', type: 'workspaceOverview' }
+        ]
+      }
+    });
+
+    expect(getTabToFocusForCurrentWorkspace(state)).toEqual({ uid: 'scratch-b-overview' });
   });
 
   it('returns in-workspace tab when active tab is from another workspace', () => {
@@ -138,5 +160,23 @@ describe('getTabToFocusForCurrentWorkspace', () => {
       }
     });
     expect(getTabToFocusForCurrentWorkspace(state)).toBeNull();
+  });
+
+  it('keeps focus on the selected collection when collection mode is active', () => {
+    const state = buildState({
+      requestTabView: {
+        mode: 'collection',
+        collectionUid: 'col-b'
+      },
+      tabs: {
+        activeTabUid: 'scratch-b-overview',
+        tabs: [
+          { uid: 'col-b-settings', collectionUid: 'col-b', type: 'collection-settings' },
+          { uid: 'scratch-b-overview', collectionUid: 'scratch-b', type: 'workspaceOverview' }
+        ]
+      }
+    });
+
+    expect(getTabToFocusForCurrentWorkspace(state)).toEqual({ uid: 'col-b-settings' });
   });
 });

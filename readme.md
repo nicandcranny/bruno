@@ -215,7 +215,8 @@ Improve request search on the sidebar to allow search for collection names
 ## TODOs
 
 1. Favorite feature for collections (stay on top)
-2. Allow search folder on sidebar search
+2. Allow search folder on sidebar search + improve where if the folder/collection name matches, the content should show the subfolders/requests
 3. Instant action (like cmd+shift+p) - for git, etc. 
 4. Save button on environment should be disabled when there are no changes - also environment should have the dot on the tab when there are unsaved changes
-5. Improve Git diff UI
+5. Interaction on global search should auto select and focus on the item
+6. API spec as first-class citizen

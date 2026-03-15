@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   IconCategory,
   IconBox,
+  IconHome,
   IconChevronDown,
   IconRun,
   IconEye,
@@ -16,10 +17,11 @@ import {
   IconWorld
 } from '@tabler/icons';
 import OpenAPISyncIcon from 'components/Icons/OpenAPISync';
-import { switchWorkspace, renameWorkspaceAction, exportWorkspaceAction } from 'providers/ReduxStore/slices/workspaces/actions';
+import { renameWorkspaceAction, exportWorkspaceAction } from 'providers/ReduxStore/slices/workspaces/actions';
 import { updateWorkspace } from 'providers/ReduxStore/slices/workspaces';
 import { showInFolder } from 'providers/ReduxStore/slices/collections/actions';
 import { addTab, focusTab, updateTab } from 'providers/ReduxStore/slices/tabs';
+import { setRequestTabView } from 'providers/ReduxStore/slices/requestTabView';
 import { uuid } from 'utils/common';
 import toast from 'react-hot-toast';
 import Dropdown from 'components/Dropdown';
@@ -34,8 +36,9 @@ import { normalizePath } from 'utils/common/path';
 import classNames from 'classnames';
 import StyledWrapper from './StyledWrapper';
 import { useTheme } from 'providers/Theme';
+import { selectResolvedRequestTabView } from '../../../selectors/requestTabView';
 
-const CollectionHeader = ({ collection, isScratchCollection }) => {
+const CollectionHeader = ({ collection, viewMode }) => {
   const dispatch = useDispatch();
   const workspaces = useSelector((state) => state.workspaces.workspaces);
   const activeWorkspaceUid = useSelector((state) => state.workspaces.activeWorkspaceUid);
@@ -43,11 +46,14 @@ const CollectionHeader = ({ collection, isScratchCollection }) => {
   const tabs = useSelector((state) => state.tabs.tabs);
   const activeTabUid = useSelector((state) => state.tabs.activeTabUid);
   const globalEnvironments = useSelector((state) => state.globalEnvironments.globalEnvironments);
+  const resolvedRequestTabView = useSelector(selectResolvedRequestTabView);
 
-  // Get the current active workspace
-  const currentWorkspace = workspaces.find((w) => w.uid === activeWorkspaceUid);
+  const currentWorkspace = workspaces.find((workspace) => workspace.uid === activeWorkspaceUid);
+  const activeCollectionContext = viewMode === 'collection' ? collection : null;
+  const isHomeView = viewMode === 'home';
+  const isAllView = viewMode === 'all';
+  const showCollectionActions = !!activeCollectionContext;
 
-  // Workspace rename state
   const [isRenamingWorkspace, setIsRenamingWorkspace] = useState(false);
   const [workspaceNameInput, setWorkspaceNameInput] = useState('');
   const [workspaceNameError, setWorkspaceNameError] = useState('');
@@ -61,15 +67,14 @@ const CollectionHeader = ({ collection, isScratchCollection }) => {
   const onSwitcherCreate = (ref) => (switcherRef.current = ref);
   const onWorkspaceActionsCreate = (ref) => (workspaceActionsRef.current = ref);
 
-  // Auto-enter rename mode when workspace is newly created
   useEffect(() => {
-    if (isScratchCollection && currentWorkspace?.isNewlyCreated) {
+    if (isHomeView && currentWorkspace?.isNewlyCreated) {
       dispatch(updateWorkspace({ uid: currentWorkspace.uid, isNewlyCreated: false }));
       setIsRenamingWorkspace(true);
       setWorkspaceNameInput(currentWorkspace.name || '');
       setWorkspaceNameError('');
     }
-  }, [isScratchCollection, currentWorkspace?.isNewlyCreated, currentWorkspace?.uid, currentWorkspace?.name, dispatch]);
+  }, [isHomeView, currentWorkspace?.isNewlyCreated, currentWorkspace?.uid, currentWorkspace?.name, dispatch]);
 
   const handleCancelWorkspaceRename = useCallback(() => {
     setIsRenamingWorkspace(false);
@@ -91,6 +96,7 @@ const CollectionHeader = ({ collection, isScratchCollection }) => {
       workspaceNameInputRef.current?.focus();
       workspaceNameInputRef.current?.select();
     }, 50);
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       clearTimeout(timer);
@@ -100,35 +106,31 @@ const CollectionHeader = ({ collection, isScratchCollection }) => {
   const collectionUpdates = useSelector((state) => state.openapiSync?.collectionUpdates || {});
   const { theme } = useTheme();
 
-  if (!collection) {
-    return null;
-  }
+  const hasOpenApiSyncConfigured = activeCollectionContext?.brunoConfig?.openapi?.[0]?.sourceUrl;
+  const hasOpenApiUpdates = hasOpenApiSyncConfigured && collectionUpdates[activeCollectionContext?.uid]?.hasUpdates;
+  const hasOpenApiError = hasOpenApiSyncConfigured && collectionUpdates[activeCollectionContext?.uid]?.error;
 
-  const hasOpenApiSyncConfigured = collection?.brunoConfig?.openapi?.[0]?.sourceUrl;
-  const hasOpenApiUpdates = hasOpenApiSyncConfigured && collectionUpdates[collection.uid]?.hasUpdates;
-  const hasOpenApiError = hasOpenApiSyncConfigured && collectionUpdates[collection.uid]?.error;
+  const mountedCollections = collections.filter((mountedCollection) => {
+    if (mountedCollection.mountStatus !== 'mounted') return false;
 
-  // Get mounted collections for the current workspace (excluding scratch collections)
-  const mountedCollections = collections.filter((c) => {
-    if (c.mountStatus !== 'mounted') return false;
-
-    const isScratch = workspaces.some((w) => w.scratchCollectionUid === c.uid);
+    const isScratch = workspaces.some((workspace) => workspace.scratchCollectionUid === mountedCollection.uid);
     if (isScratch) return false;
 
-    const workspaceCollectionPaths = currentWorkspace?.collections?.map((wc) => wc.path) || [];
-    return workspaceCollectionPaths.some((wcPath) => normalizePath(c.pathname) === normalizePath(wcPath));
+    const workspaceCollectionPaths = currentWorkspace?.collections?.map((workspaceCollection) => workspaceCollection.path) || [];
+    return workspaceCollectionPaths.some((workspaceCollectionPath) => normalizePath(mountedCollection.pathname) === normalizePath(workspaceCollectionPath));
   });
 
-  // Count tabs for the current collection
-  const tabCount = tabs.filter((t) => t.collectionUid === collection.uid).length;
-
-  // Get tab count for a given collection uid
-  const getTabCount = (collectionUid) => tabs.filter((t) => t.collectionUid === collectionUid).length;
-
-  // Get tab count for workspace (scratch collection)
+  const getTabCount = (collectionUid) => tabs.filter((tab) => tab.collectionUid === collectionUid).length;
   const workspaceTabCount = currentWorkspace?.scratchCollectionUid
     ? getTabCount(currentWorkspace.scratchCollectionUid)
     : 0;
+  const allTabCount = tabs.filter((tab) => {
+    if (!resolvedRequestTabView.workspaceCollectionUids.has(tab.collectionUid)) {
+      return false;
+    }
+
+    return tab.type !== 'workspaceOverview';
+  }).length;
   const globalEnvironmentTabUid = currentWorkspace?.scratchCollectionUid
     ? `${currentWorkspace.scratchCollectionUid}-global-environment-settings`
     : null;
@@ -138,37 +140,96 @@ const CollectionHeader = ({ collection, isScratchCollection }) => {
   const activeGlobalEnvironmentTab = tabs.find((tab) => tab.uid === activeTabUid && tab.type === 'global-environment-settings');
   const selectedGlobalEnvironment = globalEnvironments.find((environment) => environment.uid === activeGlobalEnvironmentTab?.environmentUid);
 
-  // Display name and icon based on context
-  const displayName = isScratchCollection
-    ? (currentWorkspace?.name || 'Untitled Workspace')
-    : (collection.name || 'Untitled Collection');
+  const displayName = isHomeView
+    ? 'Home'
+    : isAllView
+      ? 'All'
+      : (activeCollectionContext?.name || 'Untitled Collection');
+  const DisplayIcon = isHomeView ? IconHome : isAllView ? IconCategory : IconBox;
 
-  const DisplayIcon = isScratchCollection ? IconCategory : IconBox;
-
-  // Switcher handlers
-  const handleSwitchToWorkspace = (workspaceUid) => {
-    switcherRef.current?.hide();
-    if (workspaceUid) {
-      dispatch(switchWorkspace(workspaceUid));
+  const focusHomeView = () => {
+    const scratchCollectionUid = currentWorkspace?.scratchCollectionUid;
+    if (!scratchCollectionUid) {
+      return;
     }
+
+    dispatch(setRequestTabView({ mode: 'home', collectionUid: null }));
+
+    const homeTabs = tabs.filter((tab) => tab.collectionUid === scratchCollectionUid);
+    if (homeTabs.length > 0) {
+      dispatch(focusTab({ uid: homeTabs[homeTabs.length - 1].uid }));
+      return;
+    }
+
+    dispatch(addTab({
+      uid: `${scratchCollectionUid}-overview`,
+      collectionUid: scratchCollectionUid,
+      type: 'workspaceOverview'
+    }));
+  };
+
+  const focusAllView = () => {
+    dispatch(setRequestTabView({ mode: 'all', collectionUid: null }));
+
+    const workspaceCollectionUids = resolvedRequestTabView.workspaceCollectionUids;
+    const workspaceTabs = tabs.filter((tab) => workspaceCollectionUids.has(tab.collectionUid));
+
+    if (workspaceCollectionUids.has(resolvedRequestTabView.activeTab?.collectionUid)) {
+      return;
+    }
+
+    if (workspaceTabs.length > 0) {
+      dispatch(focusTab({ uid: workspaceTabs[workspaceTabs.length - 1].uid }));
+      return;
+    }
+
+    const scratchCollectionUid = currentWorkspace?.scratchCollectionUid;
+    if (!scratchCollectionUid) {
+      return;
+    }
+
+    dispatch(addTab({
+      uid: `${scratchCollectionUid}-overview`,
+      collectionUid: scratchCollectionUid,
+      type: 'workspaceOverview'
+    }));
   };
 
   const handleSwitchToCollection = (targetCollection) => {
     switcherRef.current?.hide();
     if (!targetCollection?.uid) return;
 
-    const existingTab = tabs.find((t) => t.collectionUid === targetCollection.uid);
-    if (existingTab) {
-      dispatch(focusTab({ uid: existingTab.uid }));
-    } else {
-      dispatch(
-        addTab({
-          uid: targetCollection.uid,
-          collectionUid: targetCollection.uid,
-          type: 'collection-settings'
-        })
-      );
+    dispatch(setRequestTabView({ mode: 'collection', collectionUid: targetCollection.uid }));
+
+    const activeCollectionTab = tabs.find((tab) => tab.uid === activeTabUid && tab.collectionUid === targetCollection.uid);
+    if (activeCollectionTab) {
+      dispatch(focusTab({ uid: activeCollectionTab.uid }));
+      return;
     }
+
+    const existingTab = tabs.filter((tab) => tab.collectionUid === targetCollection.uid);
+    if (existingTab.length > 0) {
+      dispatch(focusTab({ uid: existingTab[existingTab.length - 1].uid }));
+      return;
+    }
+
+    dispatch(
+      addTab({
+        uid: targetCollection.uid,
+        collectionUid: targetCollection.uid,
+        type: 'collection-settings'
+      })
+    );
+  };
+
+  const handleSwitchToHome = () => {
+    switcherRef.current?.hide();
+    focusHomeView();
+  };
+
+  const handleSwitchToAll = () => {
+    switcherRef.current?.hide();
+    focusAllView();
   };
 
   const handleSwitchToGlobalEnvironment = (environment) => {
@@ -176,6 +237,10 @@ const CollectionHeader = ({ collection, isScratchCollection }) => {
 
     if (!globalEnvironmentTabUid || !currentWorkspace?.scratchCollectionUid || !environment?.uid) {
       return;
+    }
+
+    if (viewMode !== 'home') {
+      dispatch(setRequestTabView({ mode: 'home', collectionUid: null }));
     }
 
     const existingTab = tabs.find((tab) => tab.uid === globalEnvironmentTabUid);
@@ -198,46 +263,60 @@ const CollectionHeader = ({ collection, isScratchCollection }) => {
     }));
   };
 
-  // Collection action handlers
   const handleRun = () => {
+    if (!activeCollectionContext) {
+      return;
+    }
+
     dispatch(
       addTab({
         uid: uuid(),
-        collectionUid: collection.uid,
+        collectionUid: activeCollectionContext.uid,
         type: 'collection-runner'
       })
     );
   };
 
   const viewVariables = () => {
+    if (!activeCollectionContext) {
+      return;
+    }
+
     dispatch(
       addTab({
         uid: uuid(),
-        collectionUid: collection.uid,
+        collectionUid: activeCollectionContext.uid,
         type: 'variables'
       })
     );
   };
 
   const viewCollectionSettings = () => {
+    if (!activeCollectionContext) {
+      return;
+    }
+
     dispatch(
       addTab({
-        uid: collection.uid,
-        collectionUid: collection.uid,
+        uid: activeCollectionContext.uid,
+        collectionUid: activeCollectionContext.uid,
         type: 'collection-settings'
       })
     );
   };
 
   const viewOpenApiSync = () => {
+    if (!activeCollectionContext) {
+      return;
+    }
+
     dispatch(addTab({
       uid: uuid(),
-      collectionUid: collection.uid,
+      collectionUid: activeCollectionContext.uid,
       type: 'openapi-sync'
     }));
   };
 
-  // Build overflow menu items for the "..." dropdown
   const overflowMenuItems = [
     { id: 'variables', label: 'Variables', leftSection: IconEye, onClick: viewVariables },
     ...(!hasOpenApiSyncConfigured
@@ -246,7 +325,6 @@ const CollectionHeader = ({ collection, isScratchCollection }) => {
     { id: 'collection-settings', label: 'Collection Settings', leftSection: IconSettings, onClick: viewCollectionSettings }
   ];
 
-  // Workspace action handlers (only used when isScratchCollection is true)
   const handleRenameWorkspaceClick = () => {
     workspaceActionsRef.current?.hide();
     setIsRenamingWorkspace(true);
@@ -340,8 +418,7 @@ const CollectionHeader = ({ collection, isScratchCollection }) => {
     }
   };
 
-  // Check if workspace actions should be shown
-  const showWorkspaceActions = isScratchCollection
+  const showWorkspaceActions = isHomeView
     && currentWorkspace
     && currentWorkspace.type !== 'default'
     && !isRenamingWorkspace;
@@ -356,11 +433,10 @@ const CollectionHeader = ({ collection, isScratchCollection }) => {
       )}
 
       <div className="flex items-center justify-between gap-2 py-2 px-4">
-        {/* Left side: Switcher dropdown or rename input */}
         <div className="collection-switcher">
           {isRenamingWorkspace ? (
             <div className="workspace-rename-container" ref={workspaceRenameContainerRef}>
-              <DisplayIcon size={18} strokeWidth={1.5} />
+              <IconCategory size={18} strokeWidth={1.5} />
               <input
                 ref={workspaceNameInputRef}
                 type="text"
@@ -403,29 +479,39 @@ const CollectionHeader = ({ collection, isScratchCollection }) => {
               icon={(
                 <button className="switcher-trigger">
                   <DisplayIcon size={18} strokeWidth={1.5} />
-                  <span className={classNames('switcher-name', { 'scratch-collection': isScratchCollection })}>{displayName}</span>
+                  <span className={classNames('switcher-name', { 'scratch-collection': isHomeView || isAllView })}>{displayName}</span>
                   <IconChevronDown size={14} strokeWidth={1.5} className="chevron" />
                 </button>
               )}
             >
-              {/* Workspace section */}
               {currentWorkspace && (
                 <>
-                  <div className="label-item">Workspace</div>
                   <div
                     className={classNames('dropdown-item', {
-                      'dropdown-item-active': isScratchCollection
+                      'dropdown-item-active': isHomeView
                     })}
-                    onClick={() => handleSwitchToWorkspace(currentWorkspace.uid)}
+                    onClick={handleSwitchToHome}
+                  >
+                    <div className="dropdown-icon">
+                      <IconHome size={16} strokeWidth={1.5} />
+                    </div>
+                    <span className="dropdown-label">Home</span>
+                    {workspaceTabCount > 0 && (
+                      <span className="dropdown-tab-count">{workspaceTabCount}</span>
+                    )}
+                  </div>
+                  <div
+                    className={classNames('dropdown-item', {
+                      'dropdown-item-active': isAllView
+                    })}
+                    onClick={handleSwitchToAll}
                   >
                     <div className="dropdown-icon">
                       <IconCategory size={16} strokeWidth={1.5} />
                     </div>
-                    <span className="dropdown-label">
-                      {currentWorkspace.name || 'Untitled Workspace'}
-                    </span>
-                    {workspaceTabCount > 0 && (
-                      <span className="dropdown-tab-count">{workspaceTabCount}</span>
+                    <span className="dropdown-label">All</span>
+                    {allTabCount > 0 && (
+                      <span className="dropdown-tab-count">{allTabCount}</span>
                     )}
                   </div>
                   {selectedGlobalEnvironment && (
@@ -453,25 +539,24 @@ const CollectionHeader = ({ collection, isScratchCollection }) => {
                 </>
               )}
 
-              {/* Collections section */}
               {mountedCollections.length > 0 && (
                 <>
                   <div className="dropdown-separator" />
                   <div className="label-item">Collections</div>
-                  {mountedCollections.map((col) => {
-                    const colTabCount = getTabCount(col.uid);
+                  {mountedCollections.map((mountedCollection) => {
+                    const colTabCount = getTabCount(mountedCollection.uid);
                     return (
                       <div
-                        key={col.uid}
+                        key={mountedCollection.uid}
                         className={classNames('dropdown-item', {
-                          'dropdown-item-active': !isScratchCollection && collection.uid === col.uid
+                          'dropdown-item-active': viewMode === 'collection' && collection?.uid === mountedCollection.uid
                         })}
-                        onClick={() => handleSwitchToCollection(col)}
+                        onClick={() => handleSwitchToCollection(mountedCollection)}
                       >
                         <div className="dropdown-icon">
                           <IconBox size={16} strokeWidth={1.5} />
                         </div>
-                        <span className="dropdown-label">{col.name || 'Untitled Collection'}</span>
+                        <span className="dropdown-label">{mountedCollection.name || 'Untitled Collection'}</span>
                         {colTabCount > 0 && (
                           <span className="dropdown-tab-count">{colTabCount}</span>
                         )}
@@ -483,7 +568,6 @@ const CollectionHeader = ({ collection, isScratchCollection }) => {
             </Dropdown>
           )}
 
-          {/* Workspace actions dropdown */}
           {showWorkspaceActions && (
             <Dropdown
               placement="bottom-start"
@@ -519,10 +603,8 @@ const CollectionHeader = ({ collection, isScratchCollection }) => {
           )}
         </div>
 
-        {/* Right side: Actions (only for regular collections) */}
-        {!isScratchCollection && (
+        {showCollectionActions && (
           <div className="flex flex-grow gap-1.5 items-center justify-end">
-            {/* OpenAPI Sync - standalone only when configured */}
             {hasOpenApiSyncConfigured && (
               <ToolHint
                 text={hasOpenApiError ? 'OpenAPI Error' : hasOpenApiUpdates ? 'OpenAPI Updates Available' : 'OpenAPI'}
@@ -537,23 +619,19 @@ const CollectionHeader = ({ collection, isScratchCollection }) => {
                 </ActionIcon>
               </ToolHint>
             )}
-            {/* Runner - always visible */}
             <ToolHint text="Runner" toolhintId="RunnerToolhintId" place="bottom">
               <ActionIcon onClick={handleRun} aria-label="Runner" size="sm">
                 <IconRun size={16} strokeWidth={1.5} />
               </ActionIcon>
             </ToolHint>
-            {/* JS Sandbox Mode - always visible */}
-            <JsSandboxMode collection={collection} />
-            {/* Overflow menu */}
+            <JsSandboxMode collection={activeCollectionContext} />
             <MenuDropdown items={overflowMenuItems} placement="bottom-end">
               <ActionIcon label="More actions" size="sm" style={{ border: `1px solid ${theme.border.border1}`, borderRadius: theme.border.radius.base, width: 24, marginRight: 4, marginLeft: 4 }}>
                 <IconDots size={16} strokeWidth={1.5} />
               </ActionIcon>
             </MenuDropdown>
-            {/* Environment Selector - always visible */}
             <span>
-              <EnvironmentSelector collection={collection} />
+              <EnvironmentSelector collection={activeCollectionContext} />
             </span>
           </div>
         )}

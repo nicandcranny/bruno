@@ -12,6 +12,7 @@ import workspacesReducer from './slices/workspaces';
 import apiSpecReducer from './slices/apiSpec';
 import openapiSyncReducer from './slices/openapi-sync';
 import gitReducer from './slices/git';
+import requestTabViewReducer from './slices/requestTabView';
 import { draftDetectMiddleware } from './middlewares/draft/middleware';
 import { autosaveMiddleware } from './middlewares/autosave/middleware';
 
@@ -36,7 +37,8 @@ export const store = configureStore({
     workspaces: workspacesReducer,
     apiSpec: apiSpecReducer,
     openapiSync: openapiSyncReducer,
-    git: gitReducer
+    git: gitReducer,
+    requestTabView: requestTabViewReducer
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(middleware)
 });

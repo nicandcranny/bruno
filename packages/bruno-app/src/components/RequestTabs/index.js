@@ -1,33 +1,31 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import find from 'lodash/find';
-import filter from 'lodash/filter';
 import classnames from 'classnames';
 import { IconChevronRight, IconChevronLeft } from '@tabler/icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { focusTab, reorderTabs } from 'providers/ReduxStore/slices/tabs';
-import NewRequest from 'components/Sidebar/NewRequest';
 import CollectionHeader from './CollectionHeader';
 import RequestTab from './RequestTab';
 import StyledWrapper from './StyledWrapper';
 import DraggableTab from './DraggableTab';
 import CreateTransientRequest from 'components/CreateTransientRequest';
 import ActionIcon from 'ui/ActionIcon/index';
+import { selectResolvedRequestTabView } from '../../selectors/requestTabView';
 
 const RequestTabs = () => {
   const dispatch = useDispatch();
   const tabsRef = useRef();
   const scrollContainerRef = useRef();
   const collectionTabsRef = useRef();
-  const [newRequestModalOpen, setNewRequestModalOpen] = useState(false);
-  const [tabOverflowStates, setTabOverflowStates] = useState({});
-  const [showChevrons, setShowChevrons] = useState(false);
+  const [tabOverflowStates, setTabOverflowStates] = React.useState({});
+  const [showChevrons, setShowChevrons] = React.useState(false);
   const tabs = useSelector((state) => state.tabs.tabs);
   const activeTabUid = useSelector((state) => state.tabs.activeTabUid);
   const collections = useSelector((state) => state.collections.collections);
   const leftSidebarWidth = useSelector((state) => state.app.leftSidebarWidth);
   const sidebarCollapsed = useSelector((state) => state.app.sidebarCollapsed);
   const screenWidth = useSelector((state) => state.app.screenWidth);
-  const workspaces = useSelector((state) => state.workspaces.workspaces);
+  const resolvedRequestTabView = useSelector(selectResolvedRequestTabView);
 
   const createSetHasOverflow = useCallback((tabUid) => {
     return (hasOverflow) => {
@@ -45,11 +43,13 @@ const RequestTabs = () => {
 
   const activeTab = find(tabs, (t) => t.uid === activeTabUid);
   const activeCollection = find(collections, (c) => c?.uid === activeTab?.collectionUid);
-  const collectionRequestTabs = filter(tabs, (t) => t.collectionUid === activeTab?.collectionUid);
-
-  const isScratchCollection = useMemo(() => {
-    return activeCollection ? workspaces.some((w) => w.scratchCollectionUid === activeCollection.uid) : false;
-  }, [workspaces, activeCollection]);
+  const {
+    mode,
+    selectedCollection,
+    visibleTabs,
+    scratchCollectionUid
+  } = resolvedRequestTabView;
+  const shouldRenderEmptyTabChrome = mode === 'all';
 
   useEffect(() => {
     if (!activeTabUid || !activeTab) return;
@@ -68,12 +68,12 @@ const RequestTabs = () => {
     }
 
     return () => resizeObserver.disconnect();
-  }, [activeTabUid, activeTab, collectionRequestTabs.length, screenWidth, leftSidebarWidth, sidebarCollapsed]);
+  }, [activeTabUid, activeTab, visibleTabs.length, screenWidth, leftSidebarWidth, sidebarCollapsed]);
 
   const getTabClassname = (tab, index) => {
     return classnames('request-tab select-none', {
       'active': tab.uid === activeTabUid,
-      'last-tab': tabs && tabs.length && index === tabs.length - 1,
+      'last-tab': visibleTabs && visibleTabs.length && index === visibleTabs.length - 1,
       'has-overflow': tabOverflowStates[tab.uid]
     });
   };
@@ -86,7 +86,7 @@ const RequestTabs = () => {
     );
   };
 
-  if (!activeTabUid) {
+  if (!activeTabUid && !shouldRenderEmptyTabChrome) {
     return null;
   }
 
@@ -110,17 +110,13 @@ const RequestTabs = () => {
   // Todo: Must support ephemeral requests
   return (
     <StyledWrapper>
-      {newRequestModalOpen && (
-        <NewRequest collectionUid={activeCollection?.uid} onClose={() => setNewRequestModalOpen(false)} />
-      )}
-      {collectionRequestTabs && collectionRequestTabs.length ? (
+      {(visibleTabs && visibleTabs.length) || shouldRenderEmptyTabChrome ? (
         <>
-          {activeCollection && (
-            <CollectionHeader
-              collection={activeCollection}
-              isScratchCollection={isScratchCollection}
-            />
-          )}
+          <CollectionHeader
+            collection={selectedCollection}
+            activeCollection={activeCollection}
+            viewMode={mode}
+          />
           <div className="flex items-center gap-2 pl-2" ref={collectionTabsRef}>
             <div className={classnames('scroll-chevrons', { hidden: !showChevrons })}>
               <ActionIcon size="lg" onClick={leftSlide} aria-label="Left Chevron" style={{ marginBottom: '3px' }}>
@@ -135,8 +131,9 @@ const RequestTabs = () => {
             </li> */}
             <div className="tabs-scroll-container" style={{ maxWidth: maxTablistWidth }} ref={scrollContainerRef}>
               <ul role="tablist" ref={tabsRef}>
-                {collectionRequestTabs && collectionRequestTabs.length
-                  ? collectionRequestTabs.map((tab, index) => {
+                {visibleTabs && visibleTabs.length
+                  ? visibleTabs.map((tab, index) => {
+                      const tabCollection = find(collections, (collection) => collection?.uid === tab.collectionUid);
                       return (
                         <DraggableTab
                           key={tab.uid}
@@ -152,11 +149,11 @@ const RequestTabs = () => {
                           onClick={() => handleClick(tab)}
                         >
                           <RequestTab
-                            collectionRequestTabs={collectionRequestTabs}
+                            collectionRequestTabs={visibleTabs}
                             tabIndex={index}
                             key={tab.uid}
                             tab={tab}
-                            collection={activeCollection}
+                            collection={tabCollection}
                             folderUid={tab.folderUid}
                             hasOverflow={tabOverflowStates[tab.uid]}
                             setHasOverflow={createSetHasOverflow(tab.uid)}
@@ -169,8 +166,8 @@ const RequestTabs = () => {
               </ul>
             </div>
 
-            {activeCollection && (
-              <CreateTransientRequest collectionUid={activeCollection.uid} />
+            {mode !== 'home' && (
+              <CreateTransientRequest collectionUid={mode === 'all' ? scratchCollectionUid : selectedCollection?.uid} />
             )}
 
             <div className={classnames('scroll-chevrons', { hidden: !showChevrons })}>

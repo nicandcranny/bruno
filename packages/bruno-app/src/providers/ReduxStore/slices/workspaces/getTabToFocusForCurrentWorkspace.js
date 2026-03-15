@@ -1,33 +1,7 @@
 import filter from 'lodash/filter';
 import find from 'lodash/find';
 import last from 'lodash/last';
-import { normalizePath } from 'utils/common/path';
-
-/**
- * Returns the set of collection UIDs that belong to the given workspace
- * (scratch collection + collections whose path is in workspace.collections).
- */
-export function getWorkspaceCollectionUids(state, workspace) {
-  if (!workspace) {
-    return new Set();
-  }
-  const uids = new Set();
-  if (workspace.scratchCollectionUid) {
-    uids.add(workspace.scratchCollectionUid);
-  }
-  const workspacePaths = new Set(
-    (workspace.collections || [])
-      .filter((wc) => wc.path)
-      .map((wc) => normalizePath(wc.path))
-  );
-  state.collections?.collections?.forEach((c) => {
-    if (!c.pathname) return;
-    if (workspacePaths.has(normalizePath(c.pathname))) {
-      uids.add(c.uid);
-    }
-  });
-  return uids;
-}
+import { getOverviewTabResult, getWorkspaceCollectionUids } from '../../../../selectors/requestTabView';
 
 /**
  * Returns the tab to focus so the active tab is in the current workspace, or null if no change needed.
@@ -49,21 +23,62 @@ export function getTabToFocusForCurrentWorkspace(state) {
     return null;
   }
   const workspaceCollectionUids = getWorkspaceCollectionUids(state, activeWorkspace);
-  if (workspaceCollectionUids.has(activeTab.collectionUid)) {
+  const requestTabView = state.requestTabView || { mode: 'home', collectionUid: null };
+  const scratchCollectionUid = activeWorkspace.scratchCollectionUid;
+
+  if (requestTabView.mode === 'home') {
+    if (scratchCollectionUid && activeTab.collectionUid === scratchCollectionUid) {
+      return null;
+    }
+
+    const homeTabs = scratchCollectionUid
+      ? filter(state.tabs.tabs, (tab) => tab.collectionUid === scratchCollectionUid)
+      : [];
+
+    if (homeTabs.length > 0) {
+      return { uid: last(homeTabs).uid };
+    }
+
+    return getOverviewTabResult(scratchCollectionUid);
+  }
+
+  if (requestTabView.mode === 'all' && workspaceCollectionUids.has(activeTab.collectionUid)) {
     return null;
   }
+
+  if (requestTabView.mode === 'collection') {
+    const selectedCollectionUid = requestTabView.collectionUid;
+    if (selectedCollectionUid && activeTab.collectionUid === selectedCollectionUid) {
+      return null;
+    }
+
+    const selectedCollectionTabs = selectedCollectionUid
+      ? filter(state.tabs.tabs, (tab) => tab.collectionUid === selectedCollectionUid)
+      : [];
+
+    if (selectedCollectionTabs.length > 0) {
+      return { uid: last(selectedCollectionTabs).uid };
+    }
+
+    if (workspaceCollectionUids.has(activeTab.collectionUid)) {
+      return null;
+    }
+  }
+
   const inWorkspaceTabs = filter(state.tabs.tabs, (t) => workspaceCollectionUids.has(t.collectionUid));
   if (inWorkspaceTabs.length > 0) {
     return { uid: last(inWorkspaceTabs).uid };
   }
-  const scratchCollectionUid = activeWorkspace.scratchCollectionUid;
-  if (!scratchCollectionUid) {
-    return null; // No tabs in current workspace and no scratch; cannot focus a valid tab.
+
+  const overviewResult = getOverviewTabResult(scratchCollectionUid);
+  if (!overviewResult) {
+    return null;
   }
-  const overviewTabUid = `${scratchCollectionUid}-overview`;
-  const overviewTabExists = state.tabs.tabs.some((t) => t.uid === overviewTabUid);
+
+  const overviewTabExists = state.tabs.tabs.some((tab) => tab.uid === overviewResult.uid);
   if (overviewTabExists) {
-    return { uid: overviewTabUid };
+    return { uid: overviewResult.uid };
   }
-  return { uid: overviewTabUid, addOverviewFirst: true, scratchCollectionUid };
+
+  return overviewResult;
 }

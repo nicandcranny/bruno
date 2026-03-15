@@ -38,6 +38,7 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
 
   const tabs = useSelector((state) => state.tabs.tabs);
   const activeTabUid = useSelector((state) => state.tabs.activeTabUid);
+  const collections = useSelector((state) => state.collections.collections);
   const activeTab = tabs.find((t) => t.uid === activeTabUid);
 
   const menuDropdownRef = useRef();
@@ -97,8 +98,8 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
       // Only the active tab component should handle this
       if (tab.uid !== activeTabUid) return;
 
-      // Always compute item for the active tab
-      const activeItem = findItemInCollection(collection, activeTabUid);
+      const activeTabCollection = collections.find((candidateCollection) => candidateCollection.uid === activeTab.collectionUid);
+      const activeItem = activeTabCollection ? findItemInCollection(activeTabCollection, activeTabUid) : null;
 
       switch (activeTab.type) {
         case 'request':
@@ -112,7 +113,7 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
           break;
 
         case 'collection-settings':
-          if (collection?.draft) {
+          if (activeTabCollection?.draft) {
             setShowConfirmCollectionClose(true);
           } else {
             dispatch(closeTabs({ tabUids: [activeTabUid] }));
@@ -120,7 +121,7 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
           break;
 
         case 'folder-settings': {
-          const folderItem = findItemInCollection(collection, activeTab.folderUid || tab.folderUid);
+          const folderItem = activeTabCollection ? findItemInCollection(activeTabCollection, activeTab.folderUid || tab.folderUid) : null;
           if (folderItem?.draft) {
             setShowConfirmFolderClose(true);
           } else {
@@ -130,7 +131,7 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
         }
 
         case 'environment-settings':
-          if (collection?.environmentsDraft) {
+          if (activeTabCollection?.environmentsDraft) {
             setShowConfirmEnvironmentClose(true);
           } else {
             dispatch(closeTabs({ tabUids: [activeTabUid] }));
@@ -148,7 +149,7 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
 
     window.addEventListener('close-active-tab', handleCloseTabFromHotkeys);
     return () => window.removeEventListener('close-active-tab', handleCloseTabFromHotkeys);
-  }, [dispatch, activeTab, activeTabUid, tab.uid, collection]);
+  }, [dispatch, activeTab, activeTabUid, tab.uid, collection, collections]);
 
   const handleCloseClick = (event) => {
     event.stopPropagation();
@@ -521,6 +522,7 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
           tabIndex={tabIndex}
           collectionRequestTabs={collectionRequestTabs}
           collection={collection}
+          collections={collections}
           dispatch={dispatch}
           dropdownContainerRef={dropdownContainerRef}
         />
@@ -542,7 +544,7 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
   );
 };
 
-function RequestTabMenu({ menuDropdownRef, tabLabelRef, collectionRequestTabs, tabIndex, collection, dispatch, dropdownContainerRef }) {
+function RequestTabMenu({ menuDropdownRef, tabLabelRef, collectionRequestTabs, tabIndex, collection, collections, dispatch, dropdownContainerRef }) {
   const [showCloneRequestModal, setShowCloneRequestModal] = useState(false);
   const [showAddNewRequestModal, setShowAddNewRequestModal] = useState(false);
 
@@ -556,8 +558,10 @@ function RequestTabMenu({ menuDropdownRef, tabLabelRef, collectionRequestTabs, t
   };
 
   const totalTabs = collectionRequestTabs.length || 0;
-  const currentTabUid = collectionRequestTabs[tabIndex]?.uid;
-  const currentTabItem = findItemInCollection(collection, currentTabUid);
+  const currentTab = collectionRequestTabs[tabIndex];
+  const currentTabUid = currentTab?.uid;
+  const currentTabCollection = currentTab ? collections.find((candidateCollection) => candidateCollection.uid === currentTab.collectionUid) : collection;
+  const currentTabItem = currentTabCollection ? findItemInCollection(currentTabCollection, currentTabUid) : null;
   const currentTabHasChanges = useMemo(() => hasRequestChanges(currentTabItem), [currentTabItem]);
 
   const hasLeftTabs = tabIndex !== 0;
@@ -570,10 +574,12 @@ function RequestTabMenu({ menuDropdownRef, tabLabelRef, collectionRequestTabs, t
     }
 
     try {
-      const item = findItemInCollection(collection, tabUid);
+      const tabToClose = collectionRequestTabs.find((requestTab) => requestTab.uid === tabUid);
+      const tabCollection = collections.find((candidateCollection) => candidateCollection.uid === tabToClose?.collectionUid);
+      const item = tabCollection ? findItemInCollection(tabCollection, tabUid) : null;
       // silently save unsaved changes before closing the tab
       if (hasRequestChanges(item)) {
-        await dispatch(saveRequest(item.uid, collection.uid, true));
+        await dispatch(saveRequest(item.uid, tabCollection.uid, true));
       }
 
       dispatch(closeTabs({ tabUids: [tabUid] }));
@@ -586,11 +592,11 @@ function RequestTabMenu({ menuDropdownRef, tabLabelRef, collectionRequestTabs, t
     }
 
     try {
-      const item = findItemInCollection(collection, currentTabUid);
+      const item = currentTabCollection ? findItemInCollection(currentTabCollection, currentTabUid) : null;
       if (item.draft) {
         dispatch(deleteRequestDraft({
           itemUid: item.uid,
-          collectionUid: collection.uid
+          collectionUid: currentTabCollection.uid
         }));
       }
     } catch (err) { }
@@ -600,10 +606,11 @@ function RequestTabMenu({ menuDropdownRef, tabLabelRef, collectionRequestTabs, t
     const tabUidsToClose = [];
 
     for (const tab of tabs) {
-      const item = findItemInCollection(collection, tab.uid);
+      const tabCollection = collections.find((candidateCollection) => candidateCollection.uid === tab.collectionUid);
+      const item = tabCollection ? findItemInCollection(tabCollection, tab.uid) : null;
       if (item && hasRequestChanges(item)) {
         try {
-          await dispatch(saveRequest(item.uid, collection.uid, true));
+          await dispatch(saveRequest(item.uid, tabCollection.uid, true));
         } catch (err) {
           continue;
         }
@@ -635,9 +642,13 @@ function RequestTabMenu({ menuDropdownRef, tabLabelRef, collectionRequestTabs, t
   }
 
   function handleCloseSavedTabs() {
-    const items = flattenItems(collection?.items);
-    const savedTabs = items?.filter?.((item) => !hasRequestChanges(item));
-    const savedTabIds = savedTabs?.map((item) => item.uid) || [];
+    const savedTabIds = collectionRequestTabs
+      .filter((requestTab) => {
+        const tabCollection = collections.find((candidateCollection) => candidateCollection.uid === requestTab.collectionUid);
+        const item = tabCollection ? findItemInCollection(tabCollection, requestTab.uid) : null;
+        return item && !hasRequestChanges(item);
+      })
+      .map((requestTab) => requestTab.uid);
     dispatch(closeTabs({ tabUids: savedTabIds }));
   }
 
@@ -712,13 +723,13 @@ function RequestTabMenu({ menuDropdownRef, tabLabelRef, collectionRequestTabs, t
   return (
     <Fragment>
       {showAddNewRequestModal && (
-        <NewRequest collectionUid={collection.uid} onClose={() => setShowAddNewRequestModal(false)} />
+        <NewRequest collectionUid={currentTabCollection?.uid} onClose={() => setShowAddNewRequestModal(false)} />
       )}
 
       {showCloneRequestModal && (
         <CloneCollectionItem
           item={currentTabItem}
-          collectionUid={collection.uid}
+          collectionUid={currentTabCollection?.uid}
           onClose={() => setShowCloneRequestModal(false)}
         />
       )}

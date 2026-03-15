@@ -15,8 +15,10 @@ import { removeCollection, addTransientDirectory, updateCollectionMountStatus } 
 import { clearCollectionState } from '../openapi-sync';
 import { updateGlobalEnvironments } from '../global-environments';
 import { addTab, focusTab } from '../tabs';
+import { setRequestTabView } from '../requestTabView';
 import { normalizePath } from 'utils/common/path';
 import { sanitizeName } from 'utils/common/regex';
+import { getOverviewTabResult, getWorkspaceCollectionUids } from '../../../../selectors/requestTabView';
 import toast from 'react-hot-toast';
 
 const { ipcRenderer } = window;
@@ -284,19 +286,72 @@ export const switchWorkspace = (workspaceUid) => {
     const scratchCollection = await dispatch(mountScratchCollection(workspaceUid));
     await loadWorkspaceCollectionsForSwitch(dispatch, workspace);
 
-    if (scratchCollection?.uid) {
-      const overviewTabUid = `${scratchCollection.uid}-overview`;
+    const state = getState();
+    const requestTabView = state.requestTabView || { mode: 'home', collectionUid: null };
+    const activeWorkspace = state.workspaces.workspaces.find((w) => w.uid === workspaceUid);
+    const workspaceCollectionUids = getWorkspaceCollectionUids(state, activeWorkspace);
+    const tabs = state.tabs.tabs || [];
+    const activeTab = tabs.find((tab) => tab.uid === state.tabs.activeTabUid);
+    const overviewResult = getOverviewTabResult(scratchCollection?.uid || activeWorkspace?.scratchCollectionUid);
+
+    const focusOverview = () => {
+      if (!overviewResult) {
+        return;
+      }
 
       dispatch(addTab({
-        uid: overviewTabUid,
-        collectionUid: scratchCollection.uid,
+        uid: overviewResult.uid,
+        collectionUid: overviewResult.scratchCollectionUid,
         type: 'workspaceOverview'
       }));
 
       dispatch(focusTab({
-        uid: overviewTabUid
+        uid: overviewResult.uid
       }));
+    };
+
+    if (requestTabView.mode === 'all') {
+      if (activeTab && workspaceCollectionUids.has(activeTab.collectionUid)) {
+        return;
+      }
+
+      const workspaceTabs = tabs.filter((tab) => workspaceCollectionUids.has(tab.collectionUid));
+      if (workspaceTabs.length > 0) {
+        dispatch(focusTab({
+          uid: workspaceTabs[workspaceTabs.length - 1].uid
+        }));
+      } else {
+        focusOverview();
+      }
+      return;
     }
+
+    if (requestTabView.mode === 'collection') {
+      const selectedCollectionUid = requestTabView.collectionUid;
+      const isCollectionInWorkspace = selectedCollectionUid
+        && selectedCollectionUid !== activeWorkspace?.scratchCollectionUid
+        && workspaceCollectionUids.has(selectedCollectionUid);
+
+      if (isCollectionInWorkspace) {
+        const collectionTabs = tabs.filter((tab) => tab.collectionUid === selectedCollectionUid);
+        if (collectionTabs.length > 0) {
+          dispatch(focusTab({
+            uid: collectionTabs[collectionTabs.length - 1].uid
+          }));
+        } else {
+          dispatch(addTab({
+            uid: selectedCollectionUid,
+            collectionUid: selectedCollectionUid,
+            type: 'collection-settings'
+          }));
+        }
+        return;
+      }
+
+      dispatch(setRequestTabView({ mode: 'home', collectionUid: null }));
+    }
+
+    focusOverview();
   };
 };
 
