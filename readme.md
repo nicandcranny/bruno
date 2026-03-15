@@ -211,7 +211,7 @@ Add `All` group to the active tabs list to see all active tabs in one place.
 
 ### Improve Request Search
 
-Improve request search on the sidebar to allow search for collection names
+Improve request search on the sidebar to allow search for collection names, folders, and requests
 
 ### Minor Bug Fixes
 
@@ -220,10 +220,9 @@ Improve request search on the sidebar to allow search for collection names
 ## TODOs
 
 1. Favorite feature for collections (stay on top)
-2. Allow search folder on sidebar search + improve where if the folder/collection name matches, the content should show the subfolders/requests
-3. Instant action (like cmd+shift+p) - for git, etc. 
-4. Save button on environment should be disabled when there are no changes - also environment should have the dot on the tab when there are unsaved changes
-5. Interaction on global search should auto select and focus on the item
-6. API spec into tabs
-7. Focus button on the sidebar
+2. Instant action (like cmd+shift+p) - for git, etc.
+3. Save button on environment should be disabled when there are no changes - also environment should have the dot on the tab when there are unsaved changes
+4. Interaction on global search should auto select and focus on the item
+5. API spec into tabs
+6. Focus button on the sidebar
 8. Fix configure button on global environments to directly go to the global env page
