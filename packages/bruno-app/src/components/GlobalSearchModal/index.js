@@ -262,6 +262,20 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
     }));
   };
 
+  const openSidebarSectionAfterMount = (sectionId, detail = {}) => {
+    openSidebarSection(sectionId);
+
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        openSidebarSection(sectionId, detail);
+      });
+    });
+  };
+
   const expandItemPath = (result) => {
     const collection = collections.find((c) => c.uid === result.collectionUid);
     if (!collection) return;
@@ -320,7 +334,7 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
       }
 
       if (result.environmentUid) {
-        openSidebarSection('global-variables', {
+        openSidebarSectionAfterMount('global-variables', {
           focusEnvironmentUid: result.environmentUid
         });
       }
@@ -380,6 +394,8 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
         type: 'collection-settings'
       }));
     }
+
+    openSidebarSectionAfterMount('collections');
 
     onClose();
   };

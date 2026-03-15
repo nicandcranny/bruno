@@ -58,6 +58,7 @@ const EnvironmentList = ({
   const inputRef = useRef(null);
   const renameContainerRef = useRef(null);
   const createContainerRef = useRef(null);
+  const environmentItemRefs = useRef({});
 
   const [switchEnvConfirmClose, setSwitchEnvConfirmClose] = useState(false);
   const [originalEnvironmentVariables, setOriginalEnvironmentVariables] = useState([]);
@@ -155,6 +156,22 @@ const EnvironmentList = ({
       setSelectedEnvironment(environments && environments.length ? environments[0] : null);
     }
   }, [envUids, environments, prevEnvUids]);
+
+  useEffect(() => {
+    if (activeView !== 'environment' || !selectedEnvironment?.uid) {
+      return;
+    }
+
+    const element = environmentItemRefs.current[selectedEnvironment.uid];
+    if (!element) {
+      return;
+    }
+
+    element.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest'
+    });
+  }, [activeView, selectedEnvironment?.uid, environments, searchText]);
 
   const handleEnvironmentClick = (env) => {
     if (activeView === 'dotenv' && isDotEnvModified) {
@@ -608,6 +625,13 @@ const EnvironmentList = ({
                   <div
                     key={env.uid}
                     id={env.uid}
+                    ref={(element) => {
+                      if (element) {
+                        environmentItemRefs.current[env.uid] = element;
+                      } else {
+                        delete environmentItemRefs.current[env.uid];
+                      }
+                    }}
                     className={classnames('environment-item', {
                       active: activeView === 'environment' && selectedEnvironment?.uid === env.uid,
                       renaming: renamingEnvUid === env.uid,
