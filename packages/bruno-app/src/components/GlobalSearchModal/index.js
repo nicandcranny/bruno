@@ -20,6 +20,7 @@ import {
   parseSearchQuery,
   isValidQuery,
   highlightText,
+  filterCollectionsByWorkspace,
   sortResults,
   dedupeSearchResults,
   getTypeLabel,
@@ -53,9 +54,10 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
   const activeTabUid = useSelector((state) => state.tabs.activeTabUid);
   const activeTab = tabs.find((tab) => tab.uid === activeTabUid);
   const activeWorkspace = workspaces.find((workspace) => workspace.uid === activeWorkspaceUid);
+  const scopedCollections = filterCollectionsByWorkspace(collections, activeWorkspace);
 
   const createCollectionResults = useCallback(() => {
-    return collections.map((collection) => ({
+    return scopedCollections.map((collection) => ({
       type: SEARCH_TYPES.COLLECTION,
       item: collection,
       name: collection.name,
@@ -63,12 +65,12 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
       matchType: MATCH_TYPES.COLLECTION,
       collectionUid: collection.uid
     }));
-  }, [collections]);
+  }, [scopedCollections]);
 
   const createRequestResults = useCallback((enablePathMatch = false) => {
     const requestResults = [];
 
-    collections.forEach((collection) => {
+    scopedCollections.forEach((collection) => {
       const flattenedItems = flattenItems(collection.items);
       flattenedItems.forEach((item) => {
         if (!isItemARequest(item)) {
@@ -97,14 +99,14 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
     });
 
     return requestResults;
-  }, [collections]);
+  }, [scopedCollections]);
 
   const createEnvironmentResults = useCallback(() => {
     return [
-      ...searchCollectionEnvironments(collections),
+      ...searchCollectionEnvironments(scopedCollections),
       ...searchGlobalEnvironments(globalEnvironments)
     ];
-  }, [collections, globalEnvironments]);
+  }, [scopedCollections, globalEnvironments]);
 
   const searchInCollections = useCallback((searchTerms, enablePathMatch, scope) => {
     const scopedResults = [];
@@ -137,7 +139,7 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
     }
 
     if (scope === SEARCH_SCOPES.ALL || scope === SEARCH_SCOPES.COLLECTION) {
-      collections.forEach((collection) => {
+      scopedCollections.forEach((collection) => {
         if (searchTerms.every((term) => collection.name.toLowerCase().includes(term))) {
           scopedResults.push({
             type: SEARCH_TYPES.COLLECTION,
@@ -156,7 +158,7 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
     }
 
     if (scope === SEARCH_SCOPES.ALL || scope === SEARCH_SCOPES.REQUEST) {
-      collections.forEach((collection) => {
+      scopedCollections.forEach((collection) => {
         const flattenedItems = flattenItems(collection.items);
         flattenedItems.forEach((item) => {
           const itemPath = getItemPath(item, collection, findParentItemInCollection);
@@ -214,12 +216,12 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
     }
 
     if (scope === SEARCH_SCOPES.ALL || scope === SEARCH_SCOPES.ENVIRONMENT) {
-      scopedResults.push(...searchCollectionEnvironments(collections, searchTerms));
+      scopedResults.push(...searchCollectionEnvironments(scopedCollections, searchTerms));
       scopedResults.push(...searchGlobalEnvironments(globalEnvironments, searchTerms));
     }
 
     return scopedResults;
-  }, [collections, globalEnvironments, createCollectionResults, createEnvironmentResults, createRequestResults]);
+  }, [scopedCollections, globalEnvironments, createCollectionResults, createEnvironmentResults, createRequestResults]);
 
   const performSearch = useCallback((searchQuery) => {
     const { scope, normalizedQuery, searchTerms } = parseSearchQuery(searchQuery);

@@ -2,6 +2,34 @@ import React from 'react';
 import { SEARCH_TYPES, MATCH_TYPES, SEARCH_CONFIG, SEARCH_PREFIXES, SEARCH_SCOPES } from '../constants';
 import { normalizePath } from 'utils/common/path';
 
+export const filterCollectionsByWorkspace = (collections = [], workspace = null) => {
+  if (!workspace) {
+    return [];
+  }
+
+  const workspaceCollectionPaths = new Set(
+    (workspace.collections || [])
+      .filter((collection) => collection?.path)
+      .map((collection) => normalizePath(collection.path))
+  );
+
+  return collections.filter((collection) => {
+    if (!collection) {
+      return false;
+    }
+
+    if (workspace.scratchCollectionUid && collection.uid === workspace.scratchCollectionUid) {
+      return true;
+    }
+
+    if (!collection.pathname) {
+      return false;
+    }
+
+    return workspaceCollectionPaths.has(normalizePath(collection.pathname));
+  });
+};
+
 export const normalizeQuery = (searchQuery) => {
   return searchQuery.trim().replace(/\/+/g, '/');
 };

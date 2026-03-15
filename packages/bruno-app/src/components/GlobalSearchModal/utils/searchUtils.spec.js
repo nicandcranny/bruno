@@ -2,6 +2,7 @@ const { describe, it, expect } = require('@jest/globals');
 const { MATCH_TYPES, SEARCH_SCOPES, SEARCH_TYPES } = require('../constants');
 const {
   dedupeSearchResults,
+  filterCollectionsByWorkspace,
   parseSearchQuery,
   searchCollectionEnvironments,
   searchGlobalEnvironments
@@ -48,6 +49,42 @@ describe('global search collection environment results', () => {
         collectionUid: 'col-1',
         matchType: MATCH_TYPES.ENVIRONMENT
       })
+    ]);
+  });
+});
+
+describe('global search workspace scoping', () => {
+  it('filters collections to the active workspace collections', () => {
+    const results = filterCollectionsByWorkspace(
+      [
+        { uid: 'col-1', pathname: '/workspace-a/collections/billing' },
+        { uid: 'col-2', pathname: '/workspace-b/collections/catalog' }
+      ],
+      {
+        collections: [{ path: '/workspace-a/collections/billing' }]
+      }
+    );
+
+    expect(results).toEqual([
+      expect.objectContaining({ uid: 'col-1' })
+    ]);
+  });
+
+  it('keeps the active workspace scratch collection in scope', () => {
+    const results = filterCollectionsByWorkspace(
+      [
+        { uid: 'scratch-1' },
+        { uid: 'col-1', pathname: '/workspace-a/collections/billing' }
+      ],
+      {
+        scratchCollectionUid: 'scratch-1',
+        collections: [{ path: '/workspace-a/collections/billing' }]
+      }
+    );
+
+    expect(results).toEqual([
+      expect.objectContaining({ uid: 'scratch-1' }),
+      expect.objectContaining({ uid: 'col-1' })
     ]);
   });
 });
